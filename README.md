@@ -27,7 +27,7 @@
 本项目主要用于linux-c开发,包括测试和实际开发,要做到类似freertos架构式的开发，以app为中心
 以后方便两者之间的相互移植，转换，，适用于Linux下的应用开发。
 
-### 特征：<a id="sec-1-1-1" name="sec-1-1-1"></a>
+### 特征<a id="sec-1-1-1" name="sec-1-1-1"></a>
 
 1.  配合u-boot，linux，rootfs（buildroot）共同构成嵌入式linux的系统实现。
 2.  采用cmake进行文件的组织，宏定义来进行裁剪。
@@ -41,15 +41,15 @@
 ### 添加一个app<a id="sec-1-2-1" name="sec-1-2-1"></a>
 
 1.  在根目录CMakeLists.txt中添加一个app
-    eg: set(HELLO<sub>WORLD</sub><sub>APP</sub> 1)
+    eg: set(HELLO_WORLD_APP 1)
 2.  在app目录，bsp目录等等添加
-    if (${HELLO<sub>WORLD</sub><sub>APP</sub>})
+    if (${HELLO_WORLD_APP})
       do something else&#x2026;
-    endif (${HELLO<sub>WORLD</sub><sub>APP</sub>})
+    endif (${HELLO_WORLD_APP})
 3.  在 app/中添加一个相应的app目录
 4.  在该app目录中添加相应的thread/process源文件
-5.  在该app目录中添加相应的function<sub>f源文件</sub>,like freertos工程
+5.  在该app目录中添加相应的function_f源文件,like freertos工程
 6.  在bsp中编写相应的设备底层初始化文件
-    eg: bsp<sub>ttyusb0</sub>.c bsp<sub>ttyusb0</sub>.h
+    eg: bsp_ttyusb0.c bsp_ttyusb0.h
 7.  在flib的CMakeLists.txt中做类似2的改变
 8.  在main的CMakeLists.txt中添加相应app要连接的静态库
