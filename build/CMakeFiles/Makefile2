@@ -54,10 +54,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/e66/linux_c_prj/my_test_ins_pc
+CMAKE_SOURCE_DIR = /home/e66/linux_app_ins_prj
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/e66/linux_c_prj/my_test_ins_pc/build
+CMAKE_BINARY_DIR = /home/e66/linux_app_ins_prj/build
 
 #=============================================================================
 # Directory level rules for directory app
@@ -102,7 +102,7 @@ app/uart_communication/preinstall:
 app/uart_communication/CMakeFiles/app_static.dir/all:
 	$(MAKE) -f app/uart_communication/CMakeFiles/app_static.dir/build.make app/uart_communication/CMakeFiles/app_static.dir/depend
 	$(MAKE) -f app/uart_communication/CMakeFiles/app_static.dir/build.make app/uart_communication/CMakeFiles/app_static.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/e66/linux_c_prj/my_test_ins_pc/build/CMakeFiles --progress-num=1,2 "Built target app_static"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/e66/linux_app_ins_prj/build/CMakeFiles --progress-num=1,2 "Built target app_static"
 .PHONY : app/uart_communication/CMakeFiles/app_static.dir/all
 
 # Include target in all.
@@ -112,9 +112,9 @@ all: app/uart_communication/CMakeFiles/app_static.dir/all
 
 # Build rule for subdir invocation for target.
 app/uart_communication/CMakeFiles/app_static.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/e66/linux_c_prj/my_test_ins_pc/build/CMakeFiles 2
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/e66/linux_app_ins_prj/build/CMakeFiles 2
 	$(MAKE) -f CMakeFiles/Makefile2 app/uart_communication/CMakeFiles/app_static.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/e66/linux_c_prj/my_test_ins_pc/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/e66/linux_app_ins_prj/build/CMakeFiles 0
 .PHONY : app/uart_communication/CMakeFiles/app_static.dir/rule
 
 # Convenience name for target.
@@ -157,7 +157,7 @@ bsp/preinstall:
 bsp/CMakeFiles/bsp_static.dir/all:
 	$(MAKE) -f bsp/CMakeFiles/bsp_static.dir/build.make bsp/CMakeFiles/bsp_static.dir/depend
 	$(MAKE) -f bsp/CMakeFiles/bsp_static.dir/build.make bsp/CMakeFiles/bsp_static.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/e66/linux_c_prj/my_test_ins_pc/build/CMakeFiles --progress-num=3,4 "Built target bsp_static"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/e66/linux_app_ins_prj/build/CMakeFiles --progress-num=3,4 "Built target bsp_static"
 .PHONY : bsp/CMakeFiles/bsp_static.dir/all
 
 # Include target in all.
@@ -167,9 +167,9 @@ all: bsp/CMakeFiles/bsp_static.dir/all
 
 # Build rule for subdir invocation for target.
 bsp/CMakeFiles/bsp_static.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/e66/linux_c_prj/my_test_ins_pc/build/CMakeFiles 2
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/e66/linux_app_ins_prj/build/CMakeFiles 2
 	$(MAKE) -f CMakeFiles/Makefile2 bsp/CMakeFiles/bsp_static.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/e66/linux_c_prj/my_test_ins_pc/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/e66/linux_app_ins_prj/build/CMakeFiles 0
 .PHONY : bsp/CMakeFiles/bsp_static.dir/rule
 
 # Convenience name for target.
@@ -212,7 +212,7 @@ flib/preinstall:
 flib/CMakeFiles/flib_static.dir/all:
 	$(MAKE) -f flib/CMakeFiles/flib_static.dir/build.make flib/CMakeFiles/flib_static.dir/depend
 	$(MAKE) -f flib/CMakeFiles/flib_static.dir/build.make flib/CMakeFiles/flib_static.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/e66/linux_c_prj/my_test_ins_pc/build/CMakeFiles --progress-num=5,6 "Built target flib_static"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/e66/linux_app_ins_prj/build/CMakeFiles --progress-num=5,6 "Built target flib_static"
 .PHONY : flib/CMakeFiles/flib_static.dir/all
 
 # Include target in all.
@@ -222,9 +222,9 @@ all: flib/CMakeFiles/flib_static.dir/all
 
 # Build rule for subdir invocation for target.
 flib/CMakeFiles/flib_static.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/e66/linux_c_prj/my_test_ins_pc/build/CMakeFiles 2
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/e66/linux_app_ins_prj/build/CMakeFiles 2
 	$(MAKE) -f CMakeFiles/Makefile2 flib/CMakeFiles/flib_static.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/e66/linux_c_prj/my_test_ins_pc/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/e66/linux_app_ins_prj/build/CMakeFiles 0
 .PHONY : flib/CMakeFiles/flib_static.dir/rule
 
 # Convenience name for target.
@@ -269,7 +269,7 @@ main/CMakeFiles/test_app.dir/all: bsp/CMakeFiles/bsp_static.dir/all
 main/CMakeFiles/test_app.dir/all: flib/CMakeFiles/flib_static.dir/all
 	$(MAKE) -f main/CMakeFiles/test_app.dir/build.make main/CMakeFiles/test_app.dir/depend
 	$(MAKE) -f main/CMakeFiles/test_app.dir/build.make main/CMakeFiles/test_app.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/e66/linux_c_prj/my_test_ins_pc/build/CMakeFiles --progress-num=7,8,9,10 "Built target test_app"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/e66/linux_app_ins_prj/build/CMakeFiles --progress-num=7,8,9,10 "Built target test_app"
 .PHONY : main/CMakeFiles/test_app.dir/all
 
 # Include target in all.
@@ -279,9 +279,9 @@ all: main/CMakeFiles/test_app.dir/all
 
 # Build rule for subdir invocation for target.
 main/CMakeFiles/test_app.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/e66/linux_c_prj/my_test_ins_pc/build/CMakeFiles 10
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/e66/linux_app_ins_prj/build/CMakeFiles 10
 	$(MAKE) -f CMakeFiles/Makefile2 main/CMakeFiles/test_app.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/e66/linux_c_prj/my_test_ins_pc/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/e66/linux_app_ins_prj/build/CMakeFiles 0
 .PHONY : main/CMakeFiles/test_app.dir/rule
 
 # Convenience name for target.

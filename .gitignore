@@ -11,5 +11,5 @@ include/
 src_bk/
 third_lib/
 Makefile
-*~
+.*~
 

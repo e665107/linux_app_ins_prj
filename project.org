@@ -16,8 +16,6 @@
     eg: bsp_uart.c bsp_uart.h
 6. 在flib的CMakeLists.txt中做类似2的改变
 7. 在main的CMakeLists.txt中添加相应app要连接的静态库
-
-
 ** cmds
 *** 查看线程
 ps -T -p 1092(进程ID)；可以先ps -a
@@ -26,3 +24,6 @@ ps -T -p 1092(进程ID)；可以先ps -a
 *** 
 *** 
 *** 
+** c call c++
+*** misc_f.cc misc_cc_f.h
+*** file(GLOB srcs "*.c" "*.cc" "lib/*.c"), 添加*.cc
