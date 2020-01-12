@@ -1,0 +1,33 @@
+file(GLOB hdrs "*.h")
+# file(GLOB srcs "*.c")
+# add_library(cli_objs OBJECT ${hdrs} ${srcs} )
+
+# app 
+set(MY_CLIENT 0)
+set(TEST_0 1)
+set(TEST_1 0)
+set(TEST_2 0)
+set(TEST_3 0)
+set(TEST_4 0)
+
+
+
+if (${MY_CLIENT})
+set(SRC
+    createthread.c
+     )
+endif (${MY_CLIENT})
+
+if (${TEST_0})
+set(SRC
+    app_thread_test.c  
+    )
+endif (${TEST_0})
+
+
+
+
+add_library(my_lib_static STATIC ${SRC} ${hdrs})
+
+set_target_properties(my_lib_static PROPERTIES OUTPUT_NAME "my_lib")
+

@@ -1,0 +1,20 @@
+#ifndef MISC_F_H
+#define MISC_F_H
+
+void misc_fun_test(void);
+
+int rindex_f(void);
+
+char* basename(char*  full_name);
+
+int putenv_f(void);
+
+int malloc_f(void);
+
+void f2(int *p);
+
+void f1(int **p);
+
+
+
+#endif /* MISC_F_H */

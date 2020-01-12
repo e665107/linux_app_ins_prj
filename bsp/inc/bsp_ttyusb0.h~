@@ -1,0 +1,13 @@
+#ifndef BSP_TTYS0_H
+#define BSP_TTYS0_H
+
+int bsp_ttys0_init(void);
+
+int serial_process(void);
+
+int uart_recv(int fd, char *data, int datalen);
+
+int uart_send(int fd, char *data, int datalen);
+
+
+#endif /* BSP_TTYS0_H */

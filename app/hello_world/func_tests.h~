@@ -1,0 +1,14 @@
+#ifndef FUNC_TESTS_H
+#define FUNC_TESTS_H
+
+#include "copy_f.h"
+#include "misc_f.h"
+#include "msg_queue_f.h"
+
+
+/* #define COPY_FUNC */
+/* #define GETLINE_FUNC */
+#define MISC_FUNC
+/* #define WAIT3_FUNC */
+/* #define MSG_FUNC */
+#endif /* FUNC_TESTS_H */

@@ -1,0 +1,28 @@
+#ifndef _APP_CONFIG_H
+#define _APP_CONFIG_H
+
+
+/* app configs */
+/* #define  SPI_USART_APP */
+/* #define  TEST_IO */
+/* #define  UART2_TEST_APP */
+/* #define  UART2_TEST_APP */
+/* #define  ADC_TEST_APP */
+/* #define  UART_TEST_APP */
+/* #define  TIM_TEST_APP */
+/* #define  LED_TEST_APP */
+/* #define  I2C_TEST_APP */
+/* #define  MUL_CHINNAL_ADC_TEST_APP */
+/* #define  RUN_IN_SRAM_APP */
+/* #define USB_HID_APP */
+/* #define USBD_MSC_APP */
+/* bsp configs */
+/* soc configs */
+/* #define NANTONG_APP */
+#define HELLO_WORLD_APP
+
+#endif /* _APP_CONFIG_H */
+
+
+
+

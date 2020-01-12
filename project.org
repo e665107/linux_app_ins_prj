@@ -1,0 +1,28 @@
+* project
+** introduction
+本项目主要用于linux-c开发,包括测试和实际开发,要做到类似freertos架构式的开发，以app为中心
+以后方便两者之间的相互移植，转换，只不过本项目使用cmake来进行工程管理
+** use
+*** 添加一个app
+1. 在根目录CMakeLists.txt中添加一个app
+   eg: set(HELLO_WORLD_APP 1)
+2. 在app目录，bsp目录等等添加
+       if (${HELLO_WORLD_APP})
+       endif (${HELLO_WORLD_APP})
+2. 在 app/中添加一个相应的app目录
+3. 在该app目录中添加相应的thread源文件
+4. 在该app目录中添加相应的function_f源文件，like freertos工程
+5. 在bsp中编写相应的设备底层初始化文件
+    eg: bsp_uart.c bsp_uart.h
+6. 在flib的CMakeLists.txt中做类似2的改变
+7. 在main的CMakeLists.txt中添加相应app要连接的静态库
+
+
+** cmds
+*** 查看线程
+ps -T -p 1092(进程ID)；可以先ps -a
+*** 
+*** 
+*** 
+*** 
+*** 

@@ -1,0 +1,16 @@
+/home/e66/linux_c_prj/my_test_ins_pc/build/CMakeFiles/rebuild_cache.dir
+/home/e66/linux_c_prj/my_test_ins_pc/build/CMakeFiles/edit_cache.dir
+/home/e66/linux_c_prj/my_test_ins_pc/build/app/CMakeFiles/rebuild_cache.dir
+/home/e66/linux_c_prj/my_test_ins_pc/build/app/CMakeFiles/edit_cache.dir
+/home/e66/linux_c_prj/my_test_ins_pc/build/app/uart_communication/CMakeFiles/rebuild_cache.dir
+/home/e66/linux_c_prj/my_test_ins_pc/build/app/uart_communication/CMakeFiles/app_static.dir
+/home/e66/linux_c_prj/my_test_ins_pc/build/app/uart_communication/CMakeFiles/edit_cache.dir
+/home/e66/linux_c_prj/my_test_ins_pc/build/bsp/CMakeFiles/rebuild_cache.dir
+/home/e66/linux_c_prj/my_test_ins_pc/build/bsp/CMakeFiles/bsp_static.dir
+/home/e66/linux_c_prj/my_test_ins_pc/build/bsp/CMakeFiles/edit_cache.dir
+/home/e66/linux_c_prj/my_test_ins_pc/build/flib/CMakeFiles/rebuild_cache.dir
+/home/e66/linux_c_prj/my_test_ins_pc/build/flib/CMakeFiles/flib_static.dir
+/home/e66/linux_c_prj/my_test_ins_pc/build/flib/CMakeFiles/edit_cache.dir
+/home/e66/linux_c_prj/my_test_ins_pc/build/main/CMakeFiles/rebuild_cache.dir
+/home/e66/linux_c_prj/my_test_ins_pc/build/main/CMakeFiles/test_app.dir
+/home/e66/linux_c_prj/my_test_ins_pc/build/main/CMakeFiles/edit_cache.dir

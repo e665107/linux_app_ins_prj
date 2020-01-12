@@ -1,0 +1,8 @@
+#ifndef MSG_QUEUE_F_H
+#define MSG_QUEUE_F_H
+
+int rcv_msg_f(void);
+
+int snd_msg_f( void );
+
+#endif /* MSG_QUEUE_F_H */

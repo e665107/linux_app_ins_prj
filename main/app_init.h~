@@ -1,0 +1,37 @@
+#ifndef __APP_INIT_H
+#define __APP_INIT_H
+
+#include "app_config.h"
+
+/* Priorities for the test application tasks. */
+#define TEST1_TASK_PRIORITY              ( tskIDLE_PRIORITY + 1UL )
+#define TEST2_TASK_PRIORITY              ( tskIDLE_PRIORITY + 2UL )
+#define TEST3_TASK_PRIORITY              ( tskIDLE_PRIORITY + 3UL )
+#define TEST4_TASK_PRIORITY              ( tskIDLE_PRIORITY + 4UL )
+#define TEST5_TASK_PRIORITY              ( tskIDLE_PRIORITY + 5UL )
+#define TEST6_TASK_PRIORITY              ( tskIDLE_PRIORITY + 6UL )
+#define TEST7_TASK_PRIORITY              ( tskIDLE_PRIORITY + 7UL )
+#define TEST8_TASK_PRIORITY              ( tskIDLE_PRIORITY + 8UL )
+#define TEST9_TASK_PRIORITY              ( tskIDLE_PRIORITY + 9UL )
+#define TEST10_TASK_PRIORITY             ( tskIDLE_PRIORITY + 10UL )
+#define TEST11_TASK_PRIORITY             ( tskIDLE_PRIORITY + 11UL )
+#define TEST12_TASK_PRIORITY             ( tskIDLE_PRIORITY + 12UL )
+#define TEST13_TASK_PRIORITY             ( tskIDLE_PRIORITY + 13UL )
+#define TEST14_TASK_PRIORITY             ( tskIDLE_PRIORITY + 14UL )
+#define TEST15_TASK_PRIORITY             ( tskIDLE_PRIORITY + 15UL )
+#define TEST16_TASK_PRIORITY             ( tskIDLE_PRIORITY + 16UL )
+#define TEST17_TASK_PRIORITY             ( tskIDLE_PRIORITY + 17UL )
+#define TEST18_TASK_PRIORITY             ( tskIDLE_PRIORITY + 18UL )
+#define TEST19_TASK_PRIORITY             ( tskIDLE_PRIORITY + 19UL )
+#define TEST20_TASK_PRIORITY             ( tskIDLE_PRIORITY + 20UL )
+
+/* IDLE_PRIORITY */
+#define mainFLOP_TASK_PRIORITY          ( tskIDLE_PRIORITY )
+void app_init(void);
+
+#endif
+
+
+
+
+
