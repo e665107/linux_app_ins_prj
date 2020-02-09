@@ -23,8 +23,6 @@
 
 #include "get_num.h"    /* Declares our functions for handling numeric
                            arguments (getInt(), getLong()) */
-
-
 typedef enum { FALSE, TRUE } Boolean;
 
 #define min(m,n) ((m) < (n) ? (m) : (n))

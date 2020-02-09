@@ -4,8 +4,9 @@
 if [ "$1" = "clean" ];then
     cd build
     make clean    
-    rm CMakeCache.txt
+    rm CMakeCache.txt   
     rm -r CMakeFiles
+    rm -r */CMakeFiles
     echo  "cleaned"    
 fi
 

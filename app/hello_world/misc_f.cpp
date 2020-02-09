@@ -1,4 +1,5 @@
 #include <iostream>
+#include <string>
 #include "misc_f.hpp"
 #include <stdlib.h>
 
@@ -15,6 +16,14 @@ static int add_f()
 
     return 0;
 }
+
+
+
+
+
+
+
+
 
 void misc_fun_cpp_test()
 {

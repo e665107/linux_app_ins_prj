@@ -4,8 +4,18 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-     void misc_fun_cpp_test(void);
 
+
+    
+    void misc_fun_cpp_test(void);
+
+
+
+
+
+
+
+    
 #ifdef __cplusplus
 }
 #endif

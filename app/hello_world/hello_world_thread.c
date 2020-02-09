@@ -50,7 +50,7 @@ void *thread_0(void *arg)
     
     for(;;)
     {
-        sleep(10);
+        sleep(5);
         printf("Thread0 is running\n");
         
 #ifdef MSG_FUNC
@@ -60,6 +60,11 @@ void *thread_0(void *arg)
 #ifdef CLIENT_SERVER_FUNC
         client_f();
 #endif
+
+#ifdef FIFO_CLIENT_SERVER_FUNC
+        fifo_client();
+#endif // MACRO
+        
     }
     exit(EXIT_SUCCESS);
 }
@@ -74,7 +79,7 @@ void *thread(void *arg)
 
     for(;;)
     {
-        sleep(4);
+        
 #ifdef CLIENT_SERVER_FUNC
         server_f();
 #endif // MACRO
@@ -86,17 +91,18 @@ void *thread(void *arg)
 #if 0       
         if(raise(SIGUSR1) == 0)
             break;
-#endif   
+#endif
+        
+#ifdef FIFO_CLIENT_SERVER_FUNC
+        fifo_server();
+#else
+        sleep(2);
+#endif // MACRO
+
         printf("Thread is running\n");
    
     }
 
-    for(;;)
-    {
-        sleep(2);
-        printf("Thread is running\n");
-    }
-    
     exit(EXIT_SUCCESS);
 }
 

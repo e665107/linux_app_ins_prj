@@ -82,7 +82,6 @@ int uart_recv(int fd, char *data, int datalen)
 
     /* printf("ret = %d\n", ret);   */
 //如果返回0，代表在描述符状态改变前已超过timeout时间,错误返回-1
-
     if (FD_ISSET(fd, &fs_read))
     {
         len = read(fd, data, datalen);
@@ -98,5 +97,10 @@ int uart_recv(int fd, char *data, int datalen)
 
     return 0;
 }
+
+
+
+
+
 
 

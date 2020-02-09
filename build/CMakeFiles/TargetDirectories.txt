@@ -2,9 +2,9 @@
 /home/e66/linux_app_ins_prj/build/CMakeFiles/edit_cache.dir
 /home/e66/linux_app_ins_prj/build/app/CMakeFiles/rebuild_cache.dir
 /home/e66/linux_app_ins_prj/build/app/CMakeFiles/edit_cache.dir
-/home/e66/linux_app_ins_prj/build/app/uart_communication/CMakeFiles/rebuild_cache.dir
-/home/e66/linux_app_ins_prj/build/app/uart_communication/CMakeFiles/app_static.dir
-/home/e66/linux_app_ins_prj/build/app/uart_communication/CMakeFiles/edit_cache.dir
+/home/e66/linux_app_ins_prj/build/app/hello_world/CMakeFiles/rebuild_cache.dir
+/home/e66/linux_app_ins_prj/build/app/hello_world/CMakeFiles/app_static.dir
+/home/e66/linux_app_ins_prj/build/app/hello_world/CMakeFiles/edit_cache.dir
 /home/e66/linux_app_ins_prj/build/bsp/CMakeFiles/rebuild_cache.dir
 /home/e66/linux_app_ins_prj/build/bsp/CMakeFiles/bsp_static.dir
 /home/e66/linux_app_ins_prj/build/bsp/CMakeFiles/edit_cache.dir

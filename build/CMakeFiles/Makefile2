@@ -63,72 +63,72 @@ CMAKE_BINARY_DIR = /home/e66/linux_app_ins_prj/build
 # Directory level rules for directory app
 
 # Convenience name for "all" pass in the directory.
-app/all: app/uart_communication/all
+app/all: app/hello_world/all
 
 .PHONY : app/all
 
 # Convenience name for "clean" pass in the directory.
-app/clean: app/uart_communication/clean
+app/clean: app/hello_world/clean
 
 .PHONY : app/clean
 
 # Convenience name for "preinstall" pass in the directory.
-app/preinstall: app/uart_communication/preinstall
+app/preinstall: app/hello_world/preinstall
 
 .PHONY : app/preinstall
 
 #=============================================================================
-# Directory level rules for directory app/uart_communication
+# Directory level rules for directory app/hello_world
 
 # Convenience name for "all" pass in the directory.
-app/uart_communication/all: app/uart_communication/CMakeFiles/app_static.dir/all
+app/hello_world/all: app/hello_world/CMakeFiles/app_static.dir/all
 
-.PHONY : app/uart_communication/all
+.PHONY : app/hello_world/all
 
 # Convenience name for "clean" pass in the directory.
-app/uart_communication/clean: app/uart_communication/CMakeFiles/app_static.dir/clean
+app/hello_world/clean: app/hello_world/CMakeFiles/app_static.dir/clean
 
-.PHONY : app/uart_communication/clean
+.PHONY : app/hello_world/clean
 
 # Convenience name for "preinstall" pass in the directory.
-app/uart_communication/preinstall:
+app/hello_world/preinstall:
 
-.PHONY : app/uart_communication/preinstall
+.PHONY : app/hello_world/preinstall
 
 #=============================================================================
-# Target rules for target app/uart_communication/CMakeFiles/app_static.dir
+# Target rules for target app/hello_world/CMakeFiles/app_static.dir
 
 # All Build rule for target.
-app/uart_communication/CMakeFiles/app_static.dir/all:
-	$(MAKE) -f app/uart_communication/CMakeFiles/app_static.dir/build.make app/uart_communication/CMakeFiles/app_static.dir/depend
-	$(MAKE) -f app/uart_communication/CMakeFiles/app_static.dir/build.make app/uart_communication/CMakeFiles/app_static.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/e66/linux_app_ins_prj/build/CMakeFiles --progress-num=1,2 "Built target app_static"
-.PHONY : app/uart_communication/CMakeFiles/app_static.dir/all
+app/hello_world/CMakeFiles/app_static.dir/all:
+	$(MAKE) -f app/hello_world/CMakeFiles/app_static.dir/build.make app/hello_world/CMakeFiles/app_static.dir/depend
+	$(MAKE) -f app/hello_world/CMakeFiles/app_static.dir/build.make app/hello_world/CMakeFiles/app_static.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/e66/linux_app_ins_prj/build/CMakeFiles --progress-num=1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18 "Built target app_static"
+.PHONY : app/hello_world/CMakeFiles/app_static.dir/all
 
 # Include target in all.
-all: app/uart_communication/CMakeFiles/app_static.dir/all
+all: app/hello_world/CMakeFiles/app_static.dir/all
 
 .PHONY : all
 
 # Build rule for subdir invocation for target.
-app/uart_communication/CMakeFiles/app_static.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/e66/linux_app_ins_prj/build/CMakeFiles 2
-	$(MAKE) -f CMakeFiles/Makefile2 app/uart_communication/CMakeFiles/app_static.dir/all
+app/hello_world/CMakeFiles/app_static.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/e66/linux_app_ins_prj/build/CMakeFiles 18
+	$(MAKE) -f CMakeFiles/Makefile2 app/hello_world/CMakeFiles/app_static.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/e66/linux_app_ins_prj/build/CMakeFiles 0
-.PHONY : app/uart_communication/CMakeFiles/app_static.dir/rule
+.PHONY : app/hello_world/CMakeFiles/app_static.dir/rule
 
 # Convenience name for target.
-app_static: app/uart_communication/CMakeFiles/app_static.dir/rule
+app_static: app/hello_world/CMakeFiles/app_static.dir/rule
 
 .PHONY : app_static
 
 # clean rule for target.
-app/uart_communication/CMakeFiles/app_static.dir/clean:
-	$(MAKE) -f app/uart_communication/CMakeFiles/app_static.dir/build.make app/uart_communication/CMakeFiles/app_static.dir/clean
-.PHONY : app/uart_communication/CMakeFiles/app_static.dir/clean
+app/hello_world/CMakeFiles/app_static.dir/clean:
+	$(MAKE) -f app/hello_world/CMakeFiles/app_static.dir/build.make app/hello_world/CMakeFiles/app_static.dir/clean
+.PHONY : app/hello_world/CMakeFiles/app_static.dir/clean
 
 # clean rule for target.
-clean: app/uart_communication/CMakeFiles/app_static.dir/clean
+clean: app/hello_world/CMakeFiles/app_static.dir/clean
 
 .PHONY : clean
 
@@ -157,7 +157,7 @@ bsp/preinstall:
 bsp/CMakeFiles/bsp_static.dir/all:
 	$(MAKE) -f bsp/CMakeFiles/bsp_static.dir/build.make bsp/CMakeFiles/bsp_static.dir/depend
 	$(MAKE) -f bsp/CMakeFiles/bsp_static.dir/build.make bsp/CMakeFiles/bsp_static.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/e66/linux_app_ins_prj/build/CMakeFiles --progress-num=3,4 "Built target bsp_static"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/e66/linux_app_ins_prj/build/CMakeFiles --progress-num=19,20 "Built target bsp_static"
 .PHONY : bsp/CMakeFiles/bsp_static.dir/all
 
 # Include target in all.
@@ -212,7 +212,7 @@ flib/preinstall:
 flib/CMakeFiles/flib_static.dir/all:
 	$(MAKE) -f flib/CMakeFiles/flib_static.dir/build.make flib/CMakeFiles/flib_static.dir/depend
 	$(MAKE) -f flib/CMakeFiles/flib_static.dir/build.make flib/CMakeFiles/flib_static.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/e66/linux_app_ins_prj/build/CMakeFiles --progress-num=5,6 "Built target flib_static"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/e66/linux_app_ins_prj/build/CMakeFiles --progress-num=21,22 "Built target flib_static"
 .PHONY : flib/CMakeFiles/flib_static.dir/all
 
 # Include target in all.
@@ -264,12 +264,12 @@ main/preinstall:
 # Target rules for target main/CMakeFiles/test_app.dir
 
 # All Build rule for target.
-main/CMakeFiles/test_app.dir/all: app/uart_communication/CMakeFiles/app_static.dir/all
+main/CMakeFiles/test_app.dir/all: app/hello_world/CMakeFiles/app_static.dir/all
 main/CMakeFiles/test_app.dir/all: bsp/CMakeFiles/bsp_static.dir/all
 main/CMakeFiles/test_app.dir/all: flib/CMakeFiles/flib_static.dir/all
 	$(MAKE) -f main/CMakeFiles/test_app.dir/build.make main/CMakeFiles/test_app.dir/depend
 	$(MAKE) -f main/CMakeFiles/test_app.dir/build.make main/CMakeFiles/test_app.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/e66/linux_app_ins_prj/build/CMakeFiles --progress-num=7,8,9,10 "Built target test_app"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/e66/linux_app_ins_prj/build/CMakeFiles --progress-num=23,24,25,26 "Built target test_app"
 .PHONY : main/CMakeFiles/test_app.dir/all
 
 # Include target in all.
@@ -279,7 +279,7 @@ all: main/CMakeFiles/test_app.dir/all
 
 # Build rule for subdir invocation for target.
 main/CMakeFiles/test_app.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/e66/linux_app_ins_prj/build/CMakeFiles 10
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/e66/linux_app_ins_prj/build/CMakeFiles 26
 	$(MAKE) -f CMakeFiles/Makefile2 main/CMakeFiles/test_app.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/e66/linux_app_ins_prj/build/CMakeFiles 0
 .PHONY : main/CMakeFiles/test_app.dir/rule

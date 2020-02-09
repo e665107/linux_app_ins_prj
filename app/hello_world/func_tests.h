@@ -6,13 +6,14 @@
 /* #define GETLINE_FUNC */
 /* #define MISC_FUNC */
 /* #define MISC1_FUNC */
-#define MISC2_FUNC
+/* #define MISC2_FUNC */
 
 /* #define WAIT3_FUNC */
 /* #define MSG_FUNC */
 /* #define FILE_BUFFERIO_FUNC */
 /* #define CLIENT_SERVER_FUNC */
 /* #define MISC_CC_FUNC */
+#define FIFO_CLIENT_SERVER_FUNC
 
 
 #ifdef MISC_FUNC
@@ -47,9 +48,9 @@
 #include "msg_queue_f.h"
 #endif // MACRO
 
-
-
-
+#ifdef FIFO_CLIENT_SERVER_FUNC
+#include "fifio_client_server.h"
+#endif // FIFO_CLIENT_SERVER_FUNC
 
 #endif /* FUNC_TESTS_H */
 

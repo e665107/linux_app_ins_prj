@@ -14,6 +14,7 @@
 #include <fcntl.h>
 #include "lib/tlpi_hdr.h"
 #include "copy_f.h"
+#include "error_functions.h"
 
 #ifndef BUF_SIZE        /* Allow "cc -D" to override definition */
 #define BUF_SIZE 1024

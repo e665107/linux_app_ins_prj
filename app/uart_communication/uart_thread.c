@@ -29,12 +29,10 @@ void *thread_0(void *arg)
     for(;;)
     {
         uart_send(serial_fd, buf, 10);
-
         sleep(2);
         printf("Thread0 is running\n");
     }
 
-    
     exit(EXIT_SUCCESS);
     
 }

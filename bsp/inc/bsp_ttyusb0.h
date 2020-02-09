@@ -2,7 +2,6 @@
 #define BSP_TTYUSB0_H
 
 
-
 extern int serial_fd;
 
 int bsp_ttyusb0_init(void);

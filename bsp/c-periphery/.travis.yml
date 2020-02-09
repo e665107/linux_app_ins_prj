@@ -1,0 +1,10 @@
+dist: bionic
+
+language: c
+
+compiler:
+  - clang
+  - gcc
+
+script:
+    - make clean all tests

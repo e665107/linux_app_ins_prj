@@ -7,8 +7,6 @@
 int fopen_f(int argc, const char*path0)
 {
     /* FILE* fps; */
-     
-
 
     return 0;
 }

@@ -33,9 +33,28 @@ static int get_daytime_f()
     exit(0);
 }
 
+/* 数组越界,  */
+static void test0()
+{
+    char str1[11] = {0};
+    char str2[10];
+    
+    int i;
+    
+    for (i = 0; i < 10; i++) {
+        str1[i] = 'a';
+    }
+    
+    strcpy(str2, str1);
+    printf("str1 = %s\n, str2 = %s\n", str1, str2);
+}
+
+
 void misc2_fun_test()
 {
-    get_daytime_f();
+    /* get_daytime_f(); */
+    test0();
+    
 }
 
 

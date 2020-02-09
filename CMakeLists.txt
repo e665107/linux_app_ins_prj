@@ -15,7 +15,7 @@ set(CMAKE_CXX_COMPILER g++)
 
 # set(CMAKE_OBJCOPY arm-none-eabi-objcopy) 
 # set(CMAKE_SIZE arm-none-eabi-size)
-set(CMAKE_CC_FLAG "-g -Wall")
+set(CMAKE_CC_FLAG "-g -Wall  ")
 set(CMAKE_CXX_FLAG "-g -Wall")
 set(CMAKE_BUILD_TYPE "Debug")
 
@@ -23,9 +23,9 @@ set(CMAKE_BUILD_TYPE "Debug")
 project(test)
 
 # app 
-set(HELLO_WORLD_APP 0)
+set(HELLO_WORLD_APP 1)
 set(STRUCTURE_APP 0)
-set(UART_COMMUNICATION_APP 1)
+set(UART_COMMUNICATION_APP 0)
 set(TEST_1 0)
 set(TEST_2 0)
 set(TEST_3 0)
@@ -42,7 +42,7 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/flib/inc
   /usr/local/include
   /usr/include
-  
+  # /usr/include/x86_64-linux-gnu/sys/
   )
 # flower_include_directories(
 #   ${PROJECT_SOURCE_DIR}/app
@@ -60,6 +60,9 @@ add_subdirectory(app)
 add_subdirectory(bsp)
 add_subdirectory(flib)
 add_subdirectory(main)
+
+
+
 
 
 
