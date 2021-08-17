@@ -16,7 +16,7 @@ usageError(const char *progName)
     exit(EXIT_FAILURE);
 }
 
-
+#if 0
 int pmsg_create()
 {
     int flags, opt;
@@ -166,5 +166,5 @@ int pmsg_unlink()
     if (mq_unlink(argv[1]) == -1)
         errExit("mq_unlink");
 }
-
+#endif
 

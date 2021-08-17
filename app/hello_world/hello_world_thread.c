@@ -99,7 +99,7 @@ void *thread(void *arg)
         sleep(2);
 #endif // MACRO
 
-        printf("Thread is running\n");
+        printf("Thread1 is running\n");
    
     }
 

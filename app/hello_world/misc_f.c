@@ -835,7 +835,7 @@ static int mmap_f(void)
 
 void misc_fun_test()
 {
-    /* malloc_f(); */
+    malloc_f();
     /* putenv_f(); */
     /* rindex_f(); */
     /* system_f(); */
@@ -854,8 +854,9 @@ void misc_fun_test()
     /* file_status_f(); */
     /* fsync_f(); */
     /* lseek_f(); */
-    mmap_f();
+    /* mmap_f(); */
 }
+
 
 
 
