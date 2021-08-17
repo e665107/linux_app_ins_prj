@@ -855,7 +855,10 @@ void misc_fun_test()
     /* fsync_f(); */
     /* lseek_f(); */
     /* mmap_f(); */
+    exit(EXIT_SUCCESS);
+
 }
+
 
 
 
