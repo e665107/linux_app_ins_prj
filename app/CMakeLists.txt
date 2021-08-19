@@ -10,3 +10,6 @@ if (${STRUCTURE_APP})
 add_subdirectory(structures_and_algorithms)
 endif (${STRUCTURE_APP})
 
+if (${NET_COMMMUNICATION_APP})
+add_subdirectory(net_communication)
+endif (${NET_COMMMUNICATION_APP})

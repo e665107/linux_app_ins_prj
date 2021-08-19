@@ -16,6 +16,7 @@ usageError(const char *progName)
     exit(EXIT_FAILURE);
 }
 
+#if 0
 
 int pmsg_create()
 {
@@ -71,7 +72,7 @@ int pmsg_create()
     /* exit(EXIT_SUCCESS); */
 }
 
-int pmsg_getattr()
+int pmsg_getattr(int argc, char *argv[])
 {
     mqd_t mqd;
     struct mq_attr attr;
@@ -167,4 +168,5 @@ int pmsg_unlink()
         errExit("mq_unlink");
 }
 
+#endif
 

@@ -15,7 +15,7 @@ set(CMAKE_CXX_COMPILER g++)
 
 # set(CMAKE_OBJCOPY arm-none-eabi-objcopy) 
 # set(CMAKE_SIZE arm-none-eabi-size)
-set(CMAKE_CC_FLAG "-g -Wall  ")
+set(CMAKE_CC_FLAG "-g -Wall")
 set(CMAKE_CXX_FLAG "-g -Wall")
 set(CMAKE_BUILD_TYPE "Debug")
 
@@ -26,7 +26,10 @@ project(test)
 set(HELLO_WORLD_APP 1)
 set(STRUCTURE_APP 0)
 set(UART_COMMUNICATION_APP 0)
-set(TEST_1 0)
+set(NET_COMMMUNICATION_APP 0)
+set(QT_HELLO_APP 0)
+
+
 set(TEST_2 0)
 set(TEST_3 0)
 set(TEST_4 0)
@@ -40,6 +43,8 @@ include_directories(
   # ${PROJECT_SOURCE_DIR}/app
   ${PROJECT_SOURCE_DIR}/bsp/inc
   ${PROJECT_SOURCE_DIR}/flib/inc
+  ${PROJECT_SOURCE_DIR}/main
+
   /usr/local/include
   /usr/include
   # /usr/include/x86_64-linux-gnu/sys/

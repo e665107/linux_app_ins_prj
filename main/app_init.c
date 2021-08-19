@@ -33,6 +33,11 @@
 #include "uart_thread.h"
 #endif // MACRO
 
+
+
+
+
+
 void app_init(void)
 {
 #ifdef TEST_IO
@@ -85,6 +90,9 @@ void app_init(void)
 #ifdef UART_COMMUNICATION_APP
     create_uart_threads();
 #endif // MACRO
+
+
+    
 }
 
 

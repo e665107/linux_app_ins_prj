@@ -15,6 +15,6 @@ list(REMOVE_ITEM srcs ${mainfile})
 add_executable(test_app ${srcs} ${hdrs} ${mainfile})
 
 # target_link_libraries(test_app app_static  bsp_static comlib_static pthread )
-target_link_libraries(test_app  flib_static bsp_static app_static pthread crypt)
+target_link_libraries(test_app  pthread flib_static bsp_static app_static  crypt)
 
 

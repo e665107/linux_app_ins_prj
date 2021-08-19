@@ -20,11 +20,6 @@ static int add_f()
 
 
 
-
-
-
-
-
 void misc_fun_cpp_test()
 {
     add_f();
