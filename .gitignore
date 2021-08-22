@@ -1,12 +1,7 @@
 GTAGS
 GRTAGS
 GPATH
-build/app
-build/bin
-build/bsp
-build/flib
-build/lib
-build/main
+build
 include/
 src_bk/
 third_lib/

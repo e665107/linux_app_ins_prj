@@ -10,3 +10,7 @@ if (${STRUCTURE_APP})
 add_subdirectory(structures_and_algorithms)
 endif (${STRUCTURE_APP})
 
+
+if (${QT_APP})
+add_subdirectory(qt_apps)
+endif (${QT_APP})

@@ -111,45 +111,6 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named app_static
-
-# Build rule for target.
-app_static: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 app_static
-.PHONY : app_static
-
-# fast build rule for target.
-app_static/fast:
-	$(MAKE) -f app/hello_world/CMakeFiles/app_static.dir/build.make app/hello_world/CMakeFiles/app_static.dir/build
-.PHONY : app_static/fast
-
-#=============================================================================
-# Target rules for targets named bsp_static
-
-# Build rule for target.
-bsp_static: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 bsp_static
-.PHONY : bsp_static
-
-# fast build rule for target.
-bsp_static/fast:
-	$(MAKE) -f bsp/CMakeFiles/bsp_static.dir/build.make bsp/CMakeFiles/bsp_static.dir/build
-.PHONY : bsp_static/fast
-
-#=============================================================================
-# Target rules for targets named flib_static
-
-# Build rule for target.
-flib_static: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 flib_static
-.PHONY : flib_static
-
-# fast build rule for target.
-flib_static/fast:
-	$(MAKE) -f flib/CMakeFiles/flib_static.dir/build.make flib/CMakeFiles/flib_static.dir/build
-.PHONY : flib_static/fast
-
-#=============================================================================
 # Target rules for targets named test_app
 
 # Build rule for target.
@@ -159,8 +120,21 @@ test_app: cmake_check_build_system
 
 # fast build rule for target.
 test_app/fast:
-	$(MAKE) -f main/CMakeFiles/test_app.dir/build.make main/CMakeFiles/test_app.dir/build
+	$(MAKE) -f app/qt_apps/qt_helloworld/CMakeFiles/test_app.dir/build.make app/qt_apps/qt_helloworld/CMakeFiles/test_app.dir/build
 .PHONY : test_app/fast
+
+#=============================================================================
+# Target rules for targets named test_app_autogen
+
+# Build rule for target.
+test_app_autogen: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 test_app_autogen
+.PHONY : test_app_autogen
+
+# fast build rule for target.
+test_app_autogen/fast:
+	$(MAKE) -f app/qt_apps/qt_helloworld/CMakeFiles/test_app_autogen.dir/build.make app/qt_apps/qt_helloworld/CMakeFiles/test_app_autogen.dir/build
+.PHONY : test_app_autogen/fast
 
 # Help Target
 help:
@@ -170,10 +144,8 @@ help:
 	@echo "... depend"
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
-	@echo "... app_static"
-	@echo "... bsp_static"
-	@echo "... flib_static"
 	@echo "... test_app"
+	@echo "... test_app_autogen"
 .PHONY : help
 
 
