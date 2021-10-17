@@ -26,5 +26,3 @@
     eg: bsp_ttyusb0.c bsp_ttyusb0.h
 6. 在flib的CMakeLists.txt中做类似2的改变
 7. 在main的CMakeLists.txt中添加相应app要连接的静态库
-*** 
-
