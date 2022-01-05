@@ -7,4 +7,5 @@ src_bk/
 third_lib/
 Makefile
 .*~
-
+main/app_config.h.in~
+main/app_config.h
