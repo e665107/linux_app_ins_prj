@@ -2,7 +2,6 @@
 ** 介绍
 本项目主要用于linux-c开发,包括测试和实际开发,要做到类似freertos架构式的开发，以app为中心
 以后方便两者之间的相互移植，转换，，适用于Linux下的应用开发。
-
 *** 特征：
  1. 配合u-boot，linux，rootfs（buildroot）共同构成嵌入式linux的系统实现。 
  2. 采用cmake进行文件的组织，宏定义来进行裁剪。 
