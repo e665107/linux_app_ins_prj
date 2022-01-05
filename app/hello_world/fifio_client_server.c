@@ -1,6 +1,3 @@
-/*
-
- */
 #include "fifio_client_server.h"
 #include <signal.h>
 
@@ -115,5 +112,17 @@ int fifo_server()
         seqNum += req.seqLen;           /* Update our sequence number */
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 

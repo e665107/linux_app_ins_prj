@@ -32,6 +32,10 @@
 #ifdef UART_COMMUNICATION_APP
 #include "uart_thread.h"
 #endif // MACRO
+#ifdef NET_COMMUNICATION_APP
+#include "net_communication_thread.h"
+#endif // MACRO
+
 
 void app_init(void)
 {

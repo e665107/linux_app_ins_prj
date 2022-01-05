@@ -6,9 +6,9 @@ file(GLOB srcs "*.c")
 #     hello_world_thread.c
 # )
   
-add_library(my_lib_static STATIC  ${hdrs} ${srcs})
+add_library(app_static STATIC  ${hdrs} ${srcs})
 
-target_include_directories(my_lib_static PUBLIC
+target_include_directories(app_static PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 

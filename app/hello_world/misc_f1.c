@@ -162,7 +162,6 @@ static int epoll_input_f()
                    outstanding input (possibly more than MAX_BUF bytes) is
                    consumed (by further loop iterations) before the file
                    descriptor is closed. */
-
                 printf("    closing fd %d\n", evlist[j].data.fd);
                 if (close(evlist[j].data.fd) == -1)
                     errExit("close");

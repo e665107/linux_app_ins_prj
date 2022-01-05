@@ -24,9 +24,10 @@ endif(WIN32)
 project(test)
 
 # app 
-set(HELLO_WORLD_APP 1)
+set(HELLO_WORLD_APP 0)
 set(STRUCTURE_APP 0)
 set(UART_COMMUNICATION_APP 0)
+set(NET_COMMUNICATION_APP 1)
 set(TEST_1 0)
 set(TEST_2 0)
 set(TEST_3 0)
