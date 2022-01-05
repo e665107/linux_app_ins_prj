@@ -20,12 +20,11 @@ endif(WIN32)
 
 # set(CMAKE_OBJCOPY arm-none-eabi-objcopy) 
 # set(CMAKE_SIZE arm-none-eabi-size)
-
 # set(CMAKE_BUILD_TYPE "Release")
 project(test)
 
 # app 
-set(HELLO_WORLD_APP 0)
+set(HELLO_WORLD_APP 1)
 set(STRUCTURE_APP 0)
 set(UART_COMMUNICATION_APP 0)
 set(TEST_1 0)
@@ -35,7 +34,7 @@ set(TEST_4 0)
 set(TEST_4 0)
 
 #qt app
-set(QT_APP 1)
+set(QT_APP 0)
 
 # 复用插件
 include(${PROJECT_SOURCE_DIR}/cmake/extentions.cmake)
@@ -82,12 +81,16 @@ if (${QT_APP})
 add_subdirectory(app)
   
 else()
+add_subdirectory(app)  
 add_subdirectory(bsp)
 add_subdirectory(flib)
 add_subdirectory(main)
 endif (${QT_APP})
 
-
+configure_file(
+  ${PROJECT_SOURCE_DIR}/main/app_config.h.in
+  ${PROJECT_SOURCE_DIR}/main/app_config.h
+  )
 
 
 

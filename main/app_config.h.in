@@ -1,0 +1,4 @@
+#cmakedefine  HELLO_WORLD_APP
+#cmakedefine  STRUCTURE_APP
+#cmakedefine  UART_COMMUNICATION_APP
+
