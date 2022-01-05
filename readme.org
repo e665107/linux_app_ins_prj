@@ -18,10 +18,11 @@
        if (${HELLO_WORLD_APP})
          do something else...
        endif (${HELLO_WORLD_APP})
-2. 在 app/中添加一个相应的app目录
-3. 在该app目录中添加相应的thread/process源文件
-4. 在该app目录中添加相应的function_f源文件,like freertos工程
-5. 在bsp中编写相应的设备底层初始化文件
+3. 在 app/中添加一个相应的app目录
+4. 在该app目录中添加相应的thread/process源文件
+5. 在该app目录中添加相应的function_f源文件,like freertos工程
+6. 在bsp中编写相应的设备底层初始化文件
     eg: bsp_ttyusb0.c bsp_ttyusb0.h
-6. 在flib的CMakeLists.txt中做类似2的改变
-7. 在main的CMakeLists.txt中添加相应app要连接的静态库
+7. 在flib的CMakeLists.txt中做类似2的改变
+8. 在main的CMakeLists.txt中添加相应app要连接的静态库
+9. add the app name to the app_config.in.h
