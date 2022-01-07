@@ -4,14 +4,14 @@
     
 /* #define COPY_FUNC */
 /* #define GETLINE_FUNC */
-#define MISC_FUNC
+/* #define MISC_FUNC */
 /* #define MISC1_FUNC */
 /* #define MISC2_FUNC */
 
 /* #define WAIT3_FUNC */
 /* #define MSG_FUNC */
 /* #define FILE_BUFFERIO_FUNC */
-/* #define CLIENT_SERVER_FUNC */
+#define CLIENT_SERVER_FUNC
 /* #define MISC_CC_FUNC */
 /* #define FIFO_CLIENT_SERVER_FUNC */
 

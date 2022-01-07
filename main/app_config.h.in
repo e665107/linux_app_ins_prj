@@ -2,4 +2,8 @@
 #cmakedefine  STRUCTURE_APP
 #cmakedefine  UART_COMMUNICATION_APP
 #cmakedefine  NET_COMMUNICATION_APP
+#cmakedefine  HTTP_CLIENT_APP
+#cmakedefine  HTTPD_APP
+
+
 

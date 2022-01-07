@@ -14,6 +14,14 @@ if (${NET_COMMUNICATION_APP})
 add_subdirectory(net_communication)
 endif (${NET_COMMUNICATION_APP})
 
+if (${HTTPD_APP})
+add_subdirectory(httpd)
+endif (${HTTPD_APP})
+
+if (${HTTP_CLIENT_APP})
+add_subdirectory(http_client)
+endif (${HTTP_CLIENT_APP})
+
 
 if (${QT_APP})
 add_subdirectory(qt_apps)

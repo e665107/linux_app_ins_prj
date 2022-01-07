@@ -39,6 +39,7 @@ void *thread_0(void *arg)
     misc2_fun_test();
 #endif // MISC_FUNC
 
+    
 #ifdef FILE_BUFFERIO_FUNC
     file_io_func_t();
 #endif // FILE_BUFFERIO_FUNC
@@ -55,15 +56,11 @@ void *thread_0(void *arg)
 #ifdef MSG_FUNC
         rcv_msg_f();
 #endif // MSG_FUNC
-#ifdef CLIENT_SERVER_FUNC
-        server_f();
-#endif // MACRO
 
 #ifdef CLIENT_SERVER_FUNC
         client_f();
 #endif
 
-        
 #ifdef FIFO_CLIENT_SERVER_FUNC
         fifo_client();
 #endif // MACRO
@@ -83,6 +80,9 @@ void *thread(void *arg)
     for(;;)
     {
         
+#ifdef CLIENT_SERVER_FUNC
+        server_f();
+#endif // MACRO
 
 #ifdef MSG_FUNC
         snd_msg_f();
@@ -124,15 +124,20 @@ int create_thread()
     while(1);
 #endif // WAIT3_FUNC    
 
-    printf("main thread ,ID is %ld\n", pthread_self());
 
-#ifndef CLIENT_SERVER_FUNC
+#ifdef CLIENT_SERVER_FUNC
+
+    create_client_server_process();
+    while(1);
+#endif // CLIENT_SERVER_FUNC
+    printf("main thread ,ID is %ld\n", pthread_self());
+     
     if (pthread_create(&th_id, NULL, (void *)thread, NULL) != 0)
     {
         printf("thread creation failed\n");
         exit(EXIT_FAILURE);
     }
-#endif
+    
     if (pthread_create(&th_id0, NULL, (void *)thread_0, NULL) != 0)
     {
         printf("thread_0 creation failed\n");
@@ -143,10 +148,8 @@ int create_thread()
     {
         printf("thread_0 created successful\n");
     }
-#ifndef CLIENT_SERVER_FUNC
-    pthread_join(th_id, NULL); /* 可以得到thread的返回值 */
-#endif
     
+    pthread_join(th_id, NULL); /* 可以得到thread的返回值 */
     pthread_join(th_id0, NULL);
     exit(EXIT_SUCCESS);
 }
@@ -185,8 +188,8 @@ int create_process()
         exit(1);
     }
 
-    /* printf("utime is %d\n", rusage.ru_utime); */
-    /* printf("stime is %d\n", rusage.ru_stime); */
+    printf("utime is %d\n", rusage.ru_utime);
+    printf("stime is %d\n", rusage.ru_stime);
     printf("maxrss is %ld\n", rusage.ru_maxrss); 
     printf("ixrss is %ld\n", rusage.ru_ixrss); 
     printf("idrss is %ld\n", rusage.ru_idrss);
