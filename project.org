@@ -27,3 +27,14 @@ ps -T -p 1092(进程ID)；可以先ps -a
 ** c call c++
 *** misc_f.cc misc_cc_f.h
 *** file(GLOB srcs "*.c" "*.cc" "lib/*.c"), 添加*.cc
+** apps
+*** 
+*** 
+*** 
+*** 
+*** 
+*** 
+*** 
+*** 
+*** 
+*** 
