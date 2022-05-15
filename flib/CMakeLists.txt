@@ -5,6 +5,12 @@ if (${HELLO_WORLD_APP})
 endif (${HELLO_WORLD_APP})
 
 
+if (${ENIC_APP})
+  set(SRCS
+    src/delay.c
+)
+endif (${ENIC_APP})
+
 if (${UART_COMMUNICATION_APP})
   set(SRCS
     src/delay.c

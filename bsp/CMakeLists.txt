@@ -10,6 +10,12 @@ set(SRCS
 )
 endif (${UART_COMMUNICATION_APP})
 
+if (${ENIC_APP})
+set(SRCS
+    src/bsp_ttyusb0.c
+)
+endif (${ENIC_APP})
+
 
 if (${HTTPD_APP})
   set(SRCS

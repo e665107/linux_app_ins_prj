@@ -22,7 +22,11 @@ if (${HTTP_CLIENT_APP})
 add_subdirectory(http_client)
 endif (${HTTP_CLIENT_APP})
 
+if (${ENIC_APP})
+add_subdirectory(enic)
+endif (${ENIC_APP})
 
+#qt relate apps
 if (${QT_APP})
 add_subdirectory(qt_apps)
 endif (${QT_APP})

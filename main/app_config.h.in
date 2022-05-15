@@ -4,6 +4,4 @@
 #cmakedefine  NET_COMMUNICATION_APP
 #cmakedefine  HTTP_CLIENT_APP
 #cmakedefine  HTTPD_APP
-
-
-
+#cmakedefine  ENIC_APP

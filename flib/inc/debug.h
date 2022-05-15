@@ -4,7 +4,7 @@
 
 
 
-#define DEEBUG           1
+#define DEEBUG          1
 #define DEFDEBUG        1
 
 

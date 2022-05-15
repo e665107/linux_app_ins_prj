@@ -19,16 +19,16 @@
 #endif
 #ifdef USB_DEVICE_APP
 #include "usb_device_app.h"
-#endif // 
+#endif //
 #ifdef USBD_MSC_APP
 #include "usbd_msc_app.h"
-#endif // 
+#endif //
 #ifdef HELLO_WORLD_APP
 #include "hello_world_thread.h"
-#endif // 
+#endif //
 #ifdef STRUCTURE_APP
 #include "structures_thread.h"
-#endif // 
+#endif //
 #ifdef UART_COMMUNICATION_APP
 #include "uart_thread.h"
 #endif // MACRO
@@ -40,6 +40,9 @@
 #endif // MACRO
 #ifdef HTTPD_APP
 #include "httpd_thread.h"
+#endif // MACRO
+#ifdef ENIC_APP
+#include "enic_thread.h"
 #endif // MACRO
 
 
@@ -60,14 +63,8 @@ void app_init(void)
 #ifdef HTTPD_APP
     create_httpd_threads();
 #endif // MACRO
-    
+#ifdef ENIC_APP
+     create_enic_threads();
+#endif // MACRO
+
 }
-
-
-
-
-
-
-
-
-
