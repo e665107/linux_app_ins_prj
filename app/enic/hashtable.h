@@ -1,7 +1,7 @@
 #ifndef __HASHTABLE_H
 #define __HASHTABLE_H
 
-#include "constant_ops.h"
+#include "priv.h"
 #include <stdio.h>
 
 /*******************************************************************************

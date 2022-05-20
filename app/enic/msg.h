@@ -5,7 +5,12 @@
 #include "tx.h"
 #include "rx.h"
 
-#define MSG_NUM 128
+#define MSG_NUM             128
+
+#define SECERR_OK           0x0
+#define SECERR_INVAL        0x1  /* Invalid IPsec Protocol */
+#define SECERR_INVAL_LEN    0x2
+#define SECERR_INVAL_AUTH   0x3
 
 typedef enum
 {
@@ -43,7 +48,7 @@ typedef struct
     uint32_t gmac;
     uint32_t qid;
     uint32_t segs;
-    RX_ShadowDescTypeDef *desc;
+    NIC_RXDescTypeDef *desc;
 } MSG_DECMsgTypeDef;
 
 typedef struct

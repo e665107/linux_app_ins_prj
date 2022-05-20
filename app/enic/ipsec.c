@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "common.h"
 #include "msg.h"
 #include "ipc_slave.h"
 #include "frame.h"
@@ -10,7 +11,6 @@
 #include "packet_frame.h"
 #include "in_cksum.h"
 #include "inet.h"
-#include "common.h"
 #ifdef OUT_OF_ORDER
 #include "fifo.h"
 #endif
@@ -19,7 +19,10 @@
 #define IPSEC_MAX_SA_COUNT      32
 #define IPSEC_MAX_RX_IP_COUNT   32
 
-#define MSG_HEADER      sizeof(uint64_t)
+#define F_TCP_CKSUM             1
+#define F_UDP_CKSUM             2
+
+#define MSG_HEADER sizeof(uint64_t)
 
 typedef struct
 {
@@ -41,6 +44,7 @@ typedef struct
     uint32_t salt;
 } TX_SATypedef;
 
+uint32_t Cross_Features = 0;
 __exdata RX_IP_SATypedef ip_tbl[IPSEC_MAX_RX_IP_COUNT];
 __exdata RX_SATypedef rx_tbl[IPSEC_MAX_SA_COUNT];
 __exdata TX_SATypedef tx_tbl[IPSEC_MAX_SA_COUNT];
@@ -57,11 +61,7 @@ int Dump_MSG_UINT(char *dest, int destLen,
     int i, pos = 0;
 
     for (i = 0; i < srcLen; i++)
-    {
-        pos += snprintf(dest + pos, destLen - pos,
-                        "%08x",
-                        src[i]);
-    }
+        pos += snprintf(dest + pos, destLen - pos, "%08x", src[i]);
 
     return pos;
 }
@@ -142,36 +142,35 @@ void Dump_MSG(intptr_t msg)
             break;
         case MSG_ENC:
             {
-                FrameTypeDef frame;
-                MSG_ENCMsgTypeDef *enc =
-                    (MSG_ENCMsgTypeDef *)(msg + MSG_HEADER);
+                skbufTypeDef skb;
+                Packet_InfoTypeDef pinfo;
+                MSG_ENCMsgTypeDef *enc = (MSG_ENCMsgTypeDef *)(msg + MSG_HEADER);
 
-                printf("MSG_ENC:working\n");
-
-                frame.skBuf.data    = enc->frm;
-                frame.skBuf.dataLen = GET_FIELD(enc->desc->desc0, 0, 0x1ffff);
-                frame.ipsec.direction = OUTBOUND;
+                skb.data        = enc->frm;
+                skb.dataLen     = GET_FIELD(enc->desc->desc0, 0, 0x1ffff);
+                pinfo.direction = OUTBOUND;
 
                 printf("xfrm encryption (%p) \n", (void *)enc->frm);
-                DUMPL("SKB", frame.skBuf.data, frame.skBuf.dataLen);
-                Dissect_Frame(&frame);
+                DUMPL("SKB", skb.data, skb.dataLen);
+                Dissect_Frame(&skb, &pinfo);
             }
             break;
         case MSG_DEC:
             {
-                FrameTypeDef frame;
+                skbufTypeDef skb;
+                Packet_InfoTypeDef pinfo;
                 MSG_DECMsgTypeDef *dec =
                         (MSG_DECMsgTypeDef *)(msg + MSG_HEADER);
 
                 printf("MSG_DEC:working\n");
 
-                frame.skBuf.data    = dec->desc->desc9;
-                frame.skBuf.dataLen = GET_FIELD(dec->desc->desc0, 0, 0x1ffff);
-                frame.ipsec.direction = INBOUND;
+                skb.data    = (uint8_t *)(intptr_t)dec->desc->desc9;
+                skb.dataLen = GET_FIELD(dec->desc->desc0, 0, 0x3fff);
+                pinfo.direction = INBOUND;
 
                 printf("xfrm decryption (%p) \n", (void *)dec->desc->desc9);
-                DUMPL("SKB", frame.skBuf.data, frame.skBuf.dataLen);
-                Dissect_Frame(&frame);
+                DUMPL("SKB", skb.data, skb.dataLen);
+                /* Dissect_Frame(&skb, &pinfo); */
             }
             break;
         case MSG_RX_SA_ADD_DONE:
@@ -184,8 +183,7 @@ void Dump_MSG(intptr_t msg)
             break;
         case MSG_ENC_DONE:
             {
-                MSG_ENCMsgTypeDef *enc =
-                    (MSG_ENCMsgTypeDef *)(msg + MSG_HEADER);
+                MSG_ENCMsgTypeDef *enc = (MSG_ENCMsgTypeDef *)(msg + MSG_HEADER);
                 printf("xfrm encryption (%p) done\n", (void *)enc->frm);
             }
             break;
@@ -354,30 +352,24 @@ RX_SATypedef *Find_RX_SA(uint32_t *daddr, uint32_t spi, int ip4)
 }
 
 __STATIC_FORCEINLINE
-void TCP_UDP_Cksum(FrameTypeDef *frame)
+uint16_t TCP_Cksum(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
 {
     VecTypeDef cksumVec[4];
     uint32_t phdr[2];
-    AddressTypeDef src;
-    AddressTypeDef dst;
+    AddressTypeDef src, dst;
     uint16_t computedCksum;
 
-    setAddress(&src,
-               frame->ip.addressType,
-               4,
-               frame->skBuf.data + frame->eth.len + IPH_SRC);
-    setAddress(&dst,
-               frame->ip.addressType,
-               4,
-               frame->skBuf.data + frame->eth.len + IPH_DST);
+    setAddress(&src, pinfo->addressType, 4, skb->data + pinfo->ethLen + IPH_SRC);
+    setAddress(&dst, pinfo->addressType, 4, skb->data + pinfo->ethLen + IPH_DST);
 
     /* Set up the fields of the pseudo-header. */
     SET_CKSUM_VEC_PTR(cksumVec[0], (const uint8_t *)src.data, src.len);
     SET_CKSUM_VEC_PTR(cksumVec[1], (const uint8_t *)dst.data, dst.len);
-    switch (frame->ip.addressType)
+    switch (pinfo->addressType)
     {
         case AT_IPv4:
-            phdr[0] = htonl((IP_PROTO_TCP << 16) + frame->ipsec.espPayloadLen);
+            phdr[0] = htonl((IP_PROTO_TCP << 16) + (pinfo->espPayloadLen - pinfo->espTrailerLen - *(pinfo->espTrailer)));
+
             SET_CKSUM_VEC_PTR(cksumVec[2], (const uint8_t *)phdr, 4);
             break;
         case AT_IPv6:
@@ -386,32 +378,81 @@ void TCP_UDP_Cksum(FrameTypeDef *frame)
             /* runs only atop IPv4 and IPv6.... */
             goto drop;
     }
-    SET_CKSUM_VEC_PTR(cksumVec[3],
-                      frame->ipsec.espPayload,
-                      frame->ipsec.espPayloadLen);
-    computedCksum = inCksum(cksumVec, 4); /* htonl */
-
-    *(uint16_t *)(frame->skBuf.data + frame->eth.len + IPH_SUM) =
-        htons(computedCksum);
-
+    SET_CKSUM_VEC_PTR(cksumVec[3], pinfo->espPayload, pinfo->espPayloadLen - pinfo->espTrailerLen - *(pinfo->espTrailer));
+    printf("Padding Len:%u\n, espTrailerLen Len:%u\n, espPayload Len:%u\n",
+           *(pinfo->espTrailer), pinfo->espTrailerLen, pinfo->espPayloadLen);
+    computedCksum = inCksum(cksumVec, 4);
 #ifdef DEBUG
-    printf("TCP/UDP checksum: 0x%04x \n", htons(computedCksum));
+    printf("TCP checksum: 0x%04x \n", htons(computedCksum));
 #endif
-    return;
+    return htons(computedCksum);
 
 drop:
+    return 0;
+}
+
+__STATIC_FORCEINLINE
+uint16_t UDP_Cksum(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
+{
+    /* FIXME */
+    return 0;
+}
+
+__STATIC_FORCEINLINE
+void IPSec_CallbackInternal(intptr_t callbackTag,
+                            bool verifyResult)
+{
+    skbufTypeDef skb;
+    Packet_InfoTypeDef pinfo;
+    MSG_DECMsgTypeDef *dec = (MSG_DECMsgTypeDef *)(callbackTag + MSG_HEADER);
+
+    skb.data    = (uint8_t *)(intptr_t)dec->desc->desc9;
+    skb.dataLen = GET_FIELD(dec->desc->desc0, 0, 0x3fff);
+    Dissect_Frame(&skb, &pinfo);
+
+    switch (pinfo.ipProto)
+    {
+        case IP_PROTO_TCP:
+            if (Cross_Features & F_TCP_CKSUM)
+                if (__rv_unlikely(*(uint16_t *)(skb.data + pinfo.ethLen + IPH_SUM) !=
+                                  TCP_Cksum(&skb, &pinfo)))
+                    SET_FLAG(dec->desc->desc1, 9);
+            break;
+        case IP_PROTO_UDP:
+            if (Cross_Features & F_UDP_CKSUM)
+                if (__rv_unlikely(*(uint16_t *)(skb.data + pinfo.ethLen + IPH_SUM) !=
+                                  UDP_Cksum(&skb, &pinfo)))
+                    SET_FLAG(dec->desc->desc1, 10);
+            break;
+    }
+
+    /* AUTH */
+    if (!verifyResult)
+        SET_FIELD(dec->desc->desc8, SECERR_INVAL_AUTH, 1, 0x3);
+
     return;
 }
 
-void IPSec_callbackFn(intptr_t callbackTag)
+void IPSec_CallbackFn(intptr_t callbackTag,
+                      int status,
+                      bool verifyResult)
 {
+#ifdef DEBUG
+    bool ret = false;
+
+    ret = (status == STATUS_SUCCESS) && verifyResult ? true : false;
+    if (__rv_unlikely(ret == false))
+        printf("ERROR: IPSec failed (status %d, verifyResult %d)\n",
+               status, verifyResult);
+#endif
+
     switch (*(uint32_t *)callbackTag)
     {
         case MSG_ENC:
             *(uint32_t *)callbackTag = MSG_ENC_DONE;
             break;
         case MSG_DEC:
-            /* TCP/UDP checksum */
+            IPSec_CallbackInternal(callbackTag, verifyResult);
             *(uint32_t *)callbackTag = MSG_DEC_DONE;
             break;
     }
@@ -442,87 +483,70 @@ void IPSec_callbackFn(intptr_t callbackTag)
  *       For ESP encryption and authentication: AES-128-GCM (128-bit key)
  */
 __STATIC_FORCEINLINE
-void ESP_TRANSPORT(FrameTypeDef *frame, int direction, void *sa)
+void ESP_TRANSPORT(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo, void *sa)
 {
     const uint32_t *key;
     const uint32_t *salt;
-    FlatBufferTypedef buf[6];
     BufferListTypedef bufList;
     CY_Sym_OpDataTypedef opData;
-    IPSecTypeDef *ipsec = &frame->ipsec;
     espHdrPacket *espHdr = NULL;
-    /* iphdr *ip4 = NULL; */
-    /* void *daddr; */
-    /* bool ip4; */
-#if 0
-    switch (direction) {
-        case INBOUND:        /* decryption */
-            espHdr = ipsec->espBuf;
-            if(frame->addressType == AT_IPv4)
-            {
-                ip4 = (struct iphdr *)(frame->skBuf.data +  frame->L2LEN);
-                ip4 = TRUE;
-                daddr = &ip4->daddr;
-            }
-            if(NULL == Find_RX_SA(daddr, espHdr->spi, ip4))
-                return;
+
+    if (__rv_unlikely(NULL == sa)) {
+        printf("bad state \n");
+        return;
     }
-#endif
-    switch (direction)
-    {
-        case INBOUND:        /* decryption */
-            {
-                RX_SATypedef *rsa = (RX_SATypedef *)sa;
 
-                /* buffer list */
-                opData.direction   = INBOUND;
-                key = rsa->key;
-                salt = &rsa->salt;
-            }
-            break;
-        case OUTBOUND:       /* encryption */
-            {
-                TX_SATypedef *tsa = (TX_SATypedef *)sa;
+    switch (pinfo->direction) {
+    case INBOUND: {      /* decryption */
+        RX_SATypedef *rsa = (RX_SATypedef *)sa;
 
-                buf[0].data        = ipsec->espPayload;
-                buf[0].dataLen     = ipsec->espPayloadLen + ipsec->espTrailerLen;
-                bufList.numBuffers = 1;
-                bufList.Buffers    = buf;
-
-                opData.direction   = OUTBOUND;
-                key = tsa->key;
-                salt = &tsa->salt;
-            }
-            break;
+        key = rsa->key;
+        salt = &rsa->salt;
+        opData.direction   = INBOUND;
     }
+    break;
+    case OUTBOUND: {     /* encryption */
+        TX_SATypedef *tsa = (TX_SATypedef *)sa;
+
+        key = tsa->key;
+        salt = &tsa->salt;
+        opData.direction   = OUTBOUND;
+    }
+    break;
+    }
+
+    /* buffer list */
+    bufList.numBuffers = 1;
+    bufList.buffers[0].data    = pinfo->espPayload;
+    bufList.buffers[0].dataLen = pinfo->espPayloadLen;
 
     /* aad */
-    opData.aad       = ipsec->espBuf;
-    opData.aadLen    = ipsec->espHdrLen;
+    opData.aad       = pinfo->espHdr;
+    opData.aadLen    = pinfo->espHdrLen;
     /* digest */
-    opData.digest    = ipsec->espICV;
-    opData.digestLen = ipsec->espICVLen;
+    opData.digest    = pinfo->espICV;
+    opData.digestLen = pinfo->espICVLen;
     /* key */
     opData.key       = (uint8_t *)key;
     opData.keyLen    = 16;
     /* Noce format, must be twelve octets */
     opData.ivLen     = IV_MAX;
     memcpy(opData.iv, salt, 4);
-    memcpy(opData.iv + 4, ipsec->espBuf + ipsec->espHdrLen, 8);
+    memcpy(opData.iv + 4, pinfo->espIV, pinfo->espIVLen);
 
 #ifdef OUT_OF_ORDER
-    kfifo_put(&out_of_order, frame->opaque);
+    kfifo_put(&out_of_order, skb->opaque);
 #endif
     /* perform */
-    /* CY_SymPerformOp(IPSec_callbackFn, frame->opaque, */
-    /*                         &opData, &bufList, &bufList); */
+    CY_SymPerformOp(IPSec_CallbackFn, skb->opaque, &opData, &bufList, &bufList);
     return;
 }
 
 __STATIC_FORCEINLINE
 void IPSec_Encryption(intptr_t msg)
 {
-    FrameTypeDef frame;
+    skbufTypeDef skb;
+    Packet_InfoTypeDef pinfo;
     MSG_ENCMsgTypeDef *enc = (MSG_ENCMsgTypeDef *)(msg + MSG_HEADER);
 
     if ((!!!GET_FLAG(enc->desc->desc8, 0)))
@@ -530,52 +554,59 @@ void IPSec_Encryption(intptr_t msg)
 
     switch (GET_FIELD(enc->desc->desc8, 20, 0x1))
     {
-        case 1:                  /* ESP */
+        case 1:                     /* ESP */
+            skb.data            = enc->frm;
+            skb.dataLen         = GET_FIELD(enc->desc->desc0, 0, 0x1ffff);
+            skb.opaque          = msg;
+
+            pinfo.direction     = OUTBOUND;
+            pinfo.addressType   = AT_IPv4;        /* default */
+            pinfo.ethLen        = GET_FIELD(enc->desc->desc5, 0, 0x7f);
+            pinfo.ipLen         = GET_FIELD(enc->desc->desc5, 7, 0x1ff);
+
+            /* get esp info */
+            pinfo.espBufLen     = GET_FIELD(enc->desc->desc5, 16, 0xff);
+            pinfo.espHdrLen     = 8;
+            pinfo.espIVLen      = 8;
+            pinfo.espTrailerLen = 2;
+            pinfo.espICVLen     = GET_FIELD(enc->desc->desc8, 11, 0x1ff) -
+                                  pinfo.espTrailerLen;
+            pinfo.espPayloadLen = pinfo.espBufLen -
+                                  pinfo.espHdrLen -
+                                  pinfo.espIVLen -
+                                  pinfo.espICVLen;
+            pinfo.espBuf        = skb.data + pinfo.ethLen + pinfo.ipLen;
+            pinfo.espHdr        = pinfo.espBuf;
+            pinfo.espIV         = pinfo.espHdr + pinfo.espHdrLen;
+            pinfo.espPayload    = pinfo.espBuf +
+                                  pinfo.espHdrLen +
+                                  pinfo.espIVLen;
+            pinfo.espTrailer    = pinfo.espBuf +
+                                  pinfo.espHdrLen +
+                                  pinfo.espIVLen +
+                                  (pinfo.espPayloadLen - pinfo.espTrailerLen);
+            pinfo.espICV        = pinfo.espBuf +
+                                  pinfo.espHdrLen +
+                                  pinfo.espIVLen +
+                                  pinfo.espPayloadLen;
+
+            /* Cross Features: We haven't turned checksum checking off; checksum it. */
+            switch (*(pinfo.espTrailer + 1))
             {
-                IPSecTypeDef *ipsec  = &frame.ipsec;
-
-                frame.skBuf.data     = enc->frm;
-                frame.skBuf.dataLen  = GET_FIELD(enc->desc->desc0, 0, 0x1ffff);
-                frame.eth.len        = GET_FIELD(enc->desc->desc5, 0, 0x7f);
-                frame.ip.addressType = AT_IPv4;        /* default */
-                frame.ip.len         = GET_FIELD(enc->desc->desc5, 7, 0x1ff);
-
-                ipsec->espBuf        = frame.skBuf.data +
-                                       frame.eth.len +
-                                       frame.ip.len;
-                ipsec->espBufLen     = GET_FIELD(enc->desc->desc5, 16, 0xff);
-                ipsec->espHdrLen     = 8;
-                ipsec->espIVLen      = 8;
-                ipsec->espTrailerLen = 2;
-                ipsec->espPayload    = ipsec->espBuf +
-                                       ipsec->espHdrLen +
-                                       ipsec->espIVLen;
-                ipsec->espPayloadLen = ipsec->espBufLen -
-                                       ipsec->espHdrLen -
-                                       ipsec->espIVLen -
-                                       GET_FIELD(enc->desc->desc8, 11, 0x1ff);
-                ipsec->espICV        = ipsec->espBuf +
-                                       ipsec->espHdrLen +
-                                       ipsec->espIVLen +
-                                       ipsec->espPayloadLen +
-                                       ipsec->espTrailerLen;
-                ipsec->espICVLen     = GET_FIELD(enc->desc->desc8, 11, 0x1ff) -
-                                       ipsec->espTrailerLen;
-
-                /* Cross Features */
-                if ((!!GET_FLAG(enc->desc->desc1, 2)) ||
-                        (!!GET_FLAG(enc->desc->desc1, 3)))
-                {
-                    /* We haven't turned checksum checking off; checksum it. */
-                    TCP_UDP_Cksum(&frame);
-                }
-
-                /* Main Features */
-                frame.opaque = msg;
-                ESP_TRANSPORT(&frame,
-                              OUTBOUND,
-                              &tx_tbl[GET_FIELD(enc->desc->desc8, 1, 0x3ff)]);
+                case IP_PROTO_TCP:
+                    if (!!GET_FLAG(enc->desc->desc1, 2))
+                        *(uint16_t *)(skb.data + pinfo.ethLen + IPH_SUM) =
+                            TCP_Cksum(&skb, &pinfo);
+                    break;
+                case IP_PROTO_UDP:
+                    if (!!GET_FLAG(enc->desc->desc1, 3))
+                        *(uint16_t *)(skb.data + pinfo.ethLen + IPH_SUM) =
+                            UDP_Cksum(&skb, &pinfo);
+                    break;
             }
+
+            /* Main Features */
+            ESP_TRANSPORT(&skb, &pinfo, &tx_tbl[GET_FIELD(enc->desc->desc8, 1, 0x3ff)]);
             break;
         default:
             goto done;
@@ -589,33 +620,73 @@ done:
     return;
 }
 
+#if 0
 __STATIC_FORCEINLINE
 void IPSec_Decryption(intptr_t msg)
 {
     int ret;
-    FrameTypeDef frame;
+    skbufTypeDef skb;
+    Packet_InfoTypeDef pinfo;
     MSG_DECMsgTypeDef *dec = (MSG_DECMsgTypeDef *)(msg + MSG_HEADER);
 
-    frame.skBuf.data = dec->desc->desc9;
-    ret = Dissect_Frame(&frame);
-    if ((!!ret))
-        goto drop;
+    skb.data        = (uint8_t *)(intptr_t)dec->desc->desc9;
+    skb.dataLen     = GET_FIELD(dec->desc->desc0, 0, 0x3fff);
+    skb.opaque      = msg;
+    pinfo.direction = INBOUND;
+
+    ret = Dissect_Frame(&skb, &pinfo);
+    /* if ((!!ret)) */
+    /*     goto drop; */
 
     /* Main Features */
-    ESP_TRANSPORT(&frame,
-                  INBOUND,
-                  Find_RX_SA(frame.ip.ipDst,
-                             *(uint32_t *)frame.ipsec.espBuf,
-                             frame.ip.addressType == AT_IPv4 ? 1 : 0)
+    ESP_TRANSPORT(&skb, &pinfo,
+                  Find_RX_SA(pinfo.dst,
+                             ntoh32(pinfo.espHdr),
+                             pinfo.addressType == AT_IPv4 ? 1 : 0)
                  );
     return;
 
 drop:
     *(uint32_t *)msg = MSG_ENC_DONE;
-    SET_FIELD(dec->desc[0].desc8, ret, 1, 0x3);
+    SET_FIELD(dec->desc->desc8, ret, 1, 0x3);
     IPSec_Send_Msg(msg);
     return;
 }
+#endif
+
+__STATIC_FORCEINLINE
+void IPSec_Decryption(intptr_t msg)
+{
+    int ret;
+    skbufTypeDef skb;
+    Packet_InfoTypeDef pinfo;
+
+    MSG_DECMsgTypeDef *dec = (MSG_DECMsgTypeDef *)(msg + MSG_HEADER);
+    
+    skb.data        = (uint8_t *)(intptr_t)dec->desc->desc9;
+    skb.dataLen     = GET_FIELD(dec->desc->desc0, 0, 0x3fff);
+    skb.opaque      = msg;
+    pinfo.direction = INBOUND;
+    
+    ret = Dissect_Frame(&skb, &pinfo);
+    /* if ((!!ret)) */
+    /*     goto drop; */
+
+    /* Main Features */
+    ESP_TRANSPORT(&skb, &pinfo,
+                  Find_RX_SA(pinfo.dst,
+                             ntoh32(pinfo.espHdr),
+                             pinfo.addressType == AT_IPv4 ? 1 : 0)
+                 );
+    return;
+
+drop:
+    *(uint32_t *)msg = MSG_ENC_DONE;
+    SET_FIELD(dec->desc->desc8, ret, 1, 0x3);
+    IPSec_Send_Msg(msg);
+    return;
+}
+
 
 /* as quickly as you can,
  * Do not care about whether it looks ugly */

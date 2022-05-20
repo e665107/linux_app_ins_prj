@@ -22,11 +22,13 @@ typedef struct
     uint32_t desc3;
     uint32_t desc4;
     uint32_t desc5;
-    uint32_t desc6;//MotherInfo
-    uint32_t desc7;
+    uint32_t desc6;
+    uint32_t desc7;//MotherInfo
     uint32_t desc8;//IPsec Info
-    uint32_t desc9;//IPsec encoding list
-    uint32_t desc10;
+    uint32_t desc9;//IPsec encoding list->next
+    uint32_t desc10;//IPsec encoding list->next
+    uint32_t desc11;//IPsec encoding list->prev
+    uint32_t desc12;//IPsec encoding list->prev
 } TX_DescTypeDef;
 
 typedef struct TX_SegInfo
@@ -58,7 +60,7 @@ typedef struct
     int32_t frameParsedNum;
     int32_t frameReadyNum;
     int32_t frameSentNum;
-    int32_t frameFlushedNum;
+    int32_t frameCleanedNum;
     /* record how many kids descriptors are in use on GMAC ring */
     int ref;
 
@@ -75,30 +77,31 @@ typedef struct
 
 bool TX_IsTSO(TX_DescTypeDef *desc);
 bool TX_IsIPsec(TX_DescTypeDef *desc);
-bool TX_IsGMACRingFull(int gmac, int qid);
 bool TX_IsPipelineRunning(int gmac, int qid);
+bool TX_IsPreEncPktInQueue(int gmac, int qid);
 bool TX_IsEncDonePktInQueue(int gmac, int qid);
 int TX_GetDmaChannel(int gmac, int qid);
-TX_MotherInfoTypeDef* TX_GetMotherInfo(int gmac, int qid, TX_DescTypeDef *desc);
+TX_MotherInfoTypeDef* TX_GetParsedInfo(int gmac, int qid, TX_DescTypeDef *desc);
+void TX_FreeParsedInfo(TX_FrameInfoTypeDef *frameInfo);
 bool TX_DescNeedFetch(int gmac, int qid);
 bool TX_DescCanFetch(int gmac, int qid);
 bool TX_IsDescNeedFlush(int gmac, int qid);
 void TX_PktEnqueue(LIST_HeadTypeDef *listHead, TX_DescTypeDef *desc);
-void TX_PktDequeue(LIST_HeadTypeDef *listHead, TX_DescTypeDef *desc);
+void TX_PktDequeue(TX_DescTypeDef *desc);
 TX_DescTypeDef *TX_GetNextShadowDesc(int gmac, int qid, TX_DescTypeDef *desc);
-int TX_ParseMappingInfo(int gmac, int qid, TX_DescTypeDef *firstDesc);
-int TX_FillDMARing(int gmac, int qid, TX_MotherInfoTypeDef *mi);
+int TX_ParseDesc(int gmac, int qid, TX_DescTypeDef *firstDesc);
+int TX_FillDMARing(int gmac, int qid, TX_FrameInfoTypeDef *frameInfo);
 int TX_RequestIPsecEnc(int gmac, int qid, TX_MotherInfoTypeDef *mi);
 int TX_GetPktSegNum(int gmac, int qid, TX_DescTypeDef *firstDesc);
 int TX_GetPktSegLen(TX_DescTypeDef *Desc);
 int TX_GetPktLen(int gmac, int qid, TX_DescTypeDef *firstDesc);
 TX_DescTypeDef* TX_GetNTSDesc(int gmac, int qid);
 int TX_FetchDesc(int gmac, int qid);
-int TX_FetchData(int gmac, int qid);
+int TX_FetchData(int gmac, int qid, TX_MotherInfoTypeDef *mi);
 int TX_FlushDesc(int gmac, int qid);
 int TX_CalcToFetchedDescNum(int gmac, int qid);
 int TX_CalcToFlushDescNum(int gmac, int qid);
 void TX_CleanShadowDesc(int gmac, int qid);
 int TX_SendPkt(int gmac, int qid, TX_MotherInfoTypeDef *mi);
-void TX_NextStep(int gmac, int qid, JOB_TypeDef *currentJob);
+void TX_NextStep(int gmac, int qid, JOB_NameTypeDef currentJob);
 #endif

@@ -1,18 +1,14 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 
+#include "msg.h"
 #include "inet.h"
 #include "frame.h"
 
-
-#define SECERR_OK           0x0
-#define SECERR_INVAL        0x1  /* Invalid IPsec Protocol */
-#define SECERR_INVAL_LEN    0x2
-#define SECERR_INVAL_AUTH   0x3
-
 #ifdef DEBUG
-int IP_Try_Dissect(FrameTypeDef *frame, uint8_t ipProto);
+int IP_Try_Dissect(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo);
 
 #ifndef ETHERTYPE_IP
 #define ETHERTYPE_IP        0x0800
@@ -37,15 +33,13 @@ int IP_Try_Dissect(FrameTypeDef *frame, uint8_t ipProto);
 #define hi_nibble(b) (((b) & 0xf0) >> 4)
 #define lo_nibble(b) ((b) & 0x0f)
 
-typedef struct
-{
+typedef struct {
     uint32_t value;
     const uint8_t *strptr;
 } Value_StringTypeDef;
 
 /* the tcp header structure, passed to tap listeners */
-typedef struct
-{
+typedef struct {
     uint16_t thSport;
     uint16_t thDport;
     uint32_t thSeq;
@@ -57,8 +51,7 @@ typedef struct
     uint16_t thURP;
 } TCP_HDRTypeDef;
 
-typedef struct
-{
+typedef struct {
     uint8_t  ipVer;         /* 4 */
     uint8_t  ipTOS;         /* type of service */
     uint32_t ipLen;         /* total length */
@@ -71,16 +64,14 @@ typedef struct
     AddressTypeDef ipDst;   /* destination address */
 } IPv4_HDRTypeDef;
 
-typedef struct
-{
+typedef struct {
     AddressTypeDef dst;
     AddressTypeDef src;
     uint16_t type;
 } Eth_HDRTypeDef;
 
 static
-const uint8_t bitMask8[] =
-{
+const uint8_t bitMask8[] = {
     0x00,
     0x01,
     0x03,
@@ -106,8 +97,7 @@ const uint8_t bitMask8[] =
         }                                                                      \
     } while (0)
 
-static const char fastStrings[][4] =
-{
+static const char fastStrings[][4] = {
     "0", "1", "2", "3", "4", "5", "6", "7",
     "8", "9", "10", "11", "12", "13", "14", "15",
     "16", "17", "18", "19", "20", "21", "22", "23",
@@ -143,22 +133,20 @@ static const char fastStrings[][4] =
 };
 
 static
-const Value_StringTypeDef EtypeVals[] =
-{
+const Value_StringTypeDef EtypeVals[] = {
     {ETHERTYPE_IP,      "IPv4"},
     {ETHERTYPE_IPv6,    "IPv6"},
     {0,                 NULL  }
 };
 
 static
-const Value_StringTypeDef IPProtoVals[] =
-{
+const Value_StringTypeDef IPProtoVals[] = {
     {IP_PROTO_TCP,      "TCP"                   },  /* [RFC793] */
     {IP_PROTO_ESP,      "Encap Security Payload"},  /* [RFC4303] */
     {0,                 NULL                    },
 };
 
-const uint8_t *fastEnsureContiguous(skBufTypeDef *skb,
+const uint8_t *fastEnsureContiguous(skbufTypeDef *skb,
                                     const int offset,
                                     const uint32_t length)
 {
@@ -168,8 +156,7 @@ const uint8_t *fastEnsureContiguous(skBufTypeDef *skb,
     uOffset = offset;
     endOffset = uOffset + length;
 
-    if (endOffset <= skb->realDataLen)
-    {
+    if (endOffset <= skb->realDataLen) {
         return skb->realData + uOffset;
     }
 
@@ -177,7 +164,7 @@ const uint8_t *fastEnsureContiguous(skBufTypeDef *skb,
     return NULL;
 }
 
-uint8_t Get_UINT8(skBufTypeDef *skb, const int offset)
+uint8_t Get_UINT8(skbufTypeDef *skb, const int offset)
 {
     const uint8_t *ptr;
 
@@ -185,7 +172,7 @@ uint8_t Get_UINT8(skBufTypeDef *skb, const int offset)
     return *ptr;
 }
 
-uint16_t Get_ntohs(skBufTypeDef *skb, const int offset)
+uint16_t Get_ntohs(skbufTypeDef *skb, const int offset)
 {
     const uint8_t *ptr;
 
@@ -193,7 +180,7 @@ uint16_t Get_ntohs(skBufTypeDef *skb, const int offset)
     return ntoh16(ptr);
 }
 
-uint32_t Get_ntohl(skBufTypeDef *skb, const int offset)
+uint32_t Get_ntohl(skbufTypeDef *skb, const int offset)
 {
     const uint8_t *ptr;
 
@@ -201,7 +188,7 @@ uint32_t Get_ntohl(skBufTypeDef *skb, const int offset)
     return ntoh32(ptr);
 }
 
-uint64_t Get_ntoh64(skBufTypeDef *skb, const int offset)
+uint64_t Get_ntoh64(skbufTypeDef *skb, const int offset)
 {
     const uint8_t *ptr;
 
@@ -209,7 +196,7 @@ uint64_t Get_ntoh64(skBufTypeDef *skb, const int offset)
     return ntoh64(ptr);
 }
 
-uint64_t Get_Bits64(skBufTypeDef *skb,
+uint64_t Get_Bits64(skbufTypeDef *skb,
                     uint32_t bitOffset,
                     const int32_t Total_No_Of_Bits)
 {
@@ -217,66 +204,59 @@ uint64_t Get_Bits64(skBufTypeDef *skb,
     uint32_t octetOffset = bitOffset >> 3;
     uint8_t  Required_Bits_In_First_Octet = 8 - (bitOffset % 8);
 
-    if (Required_Bits_In_First_Octet > Total_No_Of_Bits)
-    {
+    if (Required_Bits_In_First_Octet > Total_No_Of_Bits) {
         /* the required bits don't extend to the end of the first octet */
         uint8_t rightShift = Required_Bits_In_First_Octet - Total_No_Of_Bits;
         value = (Get_UINT8(skb, octetOffset) >> rightShift) & bitMask8[Total_No_Of_Bits % 8];
-    }
-    else
-    {
+    } else {
         uint8_t remainingBitLength = Total_No_Of_Bits;
 
         /* get the bits up to the first octet boundary */
         value = 0;
         Required_Bits_In_First_Octet %= 8;
-        if (Required_Bits_In_First_Octet != 0)
-        {
+        if (Required_Bits_In_First_Octet != 0) {
             value = Get_UINT8(skb, octetOffset) & bitMask8[Required_Bits_In_First_Octet];
             remainingBitLength -= Required_Bits_In_First_Octet;
             octetOffset++;
         }
         /* take the biggest words, shorts or octets that we can */
-        while (remainingBitLength > 7)
-        {
-            switch (remainingBitLength >> 4)
-            {
-                case 0:
-                    /* 8 - 15 bits. (note that 0 - 7 would have dropped out of the while() loop) */
-                    value <<= 8;
-                    value += Get_UINT8(skb, octetOffset);
-                    remainingBitLength -= 8;
-                    octetOffset++;
-                    break;
+        while (remainingBitLength > 7) {
+            switch (remainingBitLength >> 4) {
+            case 0:
+                /* 8 - 15 bits. (note that 0 - 7 would have dropped out of the while() loop) */
+                value <<= 8;
+                value += Get_UINT8(skb, octetOffset);
+                remainingBitLength -= 8;
+                octetOffset++;
+                break;
 
-                case 1:
-                    /* 16 - 31 bits */
-                    value <<= 16;
-                    value += Get_ntohs(skb, octetOffset);
-                    remainingBitLength -= 16;
-                    octetOffset += 2;
-                    break;
+            case 1:
+                /* 16 - 31 bits */
+                value <<= 16;
+                value += Get_ntohs(skb, octetOffset);
+                remainingBitLength -= 16;
+                octetOffset += 2;
+                break;
 
-                case 2:
-                case 3:
-                    /* 32 - 63 bits */
-                    value <<= 32;
-                    value += Get_ntohl(skb, octetOffset);
-                    remainingBitLength -= 32;
-                    octetOffset += 4;
-                    break;
+            case 2:
+            case 3:
+                /* 32 - 63 bits */
+                value <<= 32;
+                value += Get_ntohl(skb, octetOffset);
+                remainingBitLength -= 32;
+                octetOffset += 4;
+                break;
 
-                default:
-                    /* 64 bits (or more???) */
-                    value = Get_ntoh64(skb, octetOffset);
-                    remainingBitLength -= 64;
-                    octetOffset += 8;
-                    break;
+            default:
+                /* 64 bits (or more???) */
+                value = Get_ntoh64(skb, octetOffset);
+                remainingBitLength -= 64;
+                octetOffset += 8;
+                break;
             }
         }
         /* get bits from any partial octet at the tail */
-        if (remainingBitLength)
-        {
+        if (remainingBitLength) {
             value <<= remainingBitLength;
             value += (Get_UINT8(skb, octetOffset) >> (8 - remainingBitLength));
         }
@@ -286,7 +266,7 @@ uint64_t Get_Bits64(skBufTypeDef *skb,
 }
 
 /* Get 1 - 8 bits */
-uint8_t Get_Bits8(skBufTypeDef *skb,
+uint8_t Get_Bits8(skbufTypeDef *skb,
                   uint32_t bitOffset,
                   const int32_t No_Of_Bits)
 {
@@ -299,12 +279,9 @@ const uint8_t *Try_Val_TO_StrIdx(const uint32_t val,
 {
     int32_t i = 0;
 
-    if (vs)
-    {
-        while (vs[i].strptr)
-        {
-            if (vs[i].value == val)
-            {
+    if (vs) {
+        while (vs[i].strptr) {
+            if (vs[i].value == val) {
                 *idx = i;
                 return (vs[i].strptr);
             }
@@ -346,8 +323,7 @@ char Low_Nibble_Of_Octet_ToHex(uint8_t oct)
        a 16-character string, the fact that initializing such an array with
        such a string is perfectly legitimate ANSI C nonwithstanding, the 17th
        '\0' byte in the string nonwithstanding. */
-    static const uint8_t hex_digits[16] =
-    {
+    static const uint8_t hex_digits[16] = {
         '0', '1', '2', '3', '4', '5', '6', '7',
         '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
     };
@@ -370,8 +346,7 @@ char *Bytes_To_Hexstr_Punct(char *out,
     uint32_t i;
 
     out = Byte_ToHex(out, ad[0]);
-    for (i = 1; i < len; i++)
-    {
+    for (i = 1; i < len; i++) {
         *out++ = punct;
         out = Byte_ToHex(out, ad[i]);
     }
@@ -399,39 +374,31 @@ IP_To_STR_Buf(const uint8_t *ad, uint8_t *buf, const int buf_len)
     Return_IF_NoSpace(16, buf, buf_len);
 
     p = fastStrings[*ad++];
-    do
-    {
+    do {
         *b++ = *p;
         p++;
-    }
-    while (*p);
+    } while (*p);
     *b++ = '.';
 
     p = fastStrings[*ad++];
-    do
-    {
+    do {
         *b++ = *p;
         p++;
-    }
-    while (*p);
+    } while (*p);
     *b++ = '.';
 
     p = fastStrings[*ad++];
-    do
-    {
+    do {
         *b++ = *p;
         p++;
-    }
-    while (*p);
+    } while (*p);
     *b++ = '.';
 
     p = fastStrings[*ad];
-    do
-    {
+    do {
         *b++ = *p;
         p++;
-    }
-    while (*p);
+    } while (*p);
     *b = 0;
 }
 
@@ -440,95 +407,195 @@ const uint8_t *IPV4_TOStr(const AddressTypeDef *addr,
 {
     IP_To_STR_Buf((const uint8_t *)addr->data, buf, bufLen);
     return buf;
-    //return (int)(strlen(buf)+1);
 }
 
-int Dissect_ESP(FrameTypeDef *frame)
+char *
+Decode_Bits_IN_Field(const uint32_t bit_offset,
+                     const int no_of_bits,
+                     const uint64_t value)
 {
-    IPSecTypeDef *ipsec  = &frame->ipsec;
-    ipsec->espBuf        = frame->skBuf.realData;
-    ipsec->espBufLen     = frame->skBuf.realDataLen;
-    ipsec->espHdrLen     = 8;
-    ipsec->espIVLen      = 8;
-    ipsec->espTrailerLen = 2;
+    uint64_t mask;
+    static char str[256 + 64]; /* static, May overflow */
+    int bit, str_p = 0;
+    int i;
+    int max_bits = Min(64, no_of_bits);
+
+    mask = 1ULL << (max_bits - 1);
+
+    memset(str, 0, sizeof(str));
+    /* Prepare the string, 256 pos for the bits and zero termination, + 64 for the spaces */
+    for (bit = 0; bit < ((int)(bit_offset & 0x07)); bit++) {
+        if (bit && (!(bit % 4))) {
+            str[str_p] = ' ';
+            str_p++;
+        }
+        str[str_p] = '.';
+        str_p++;
+    }
+
+    /* read the bits for the int */
+    for (i = 0; i < max_bits; i++) {
+        if (bit && (!(bit % 4))) {
+            str[str_p] = ' ';
+            str_p++;
+        }
+        if (bit && (!(bit % 8))) {
+            str[str_p] = ' ';
+            str_p++;
+        }
+        bit++;
+        if ((value & mask) != 0) {
+            str[str_p] = '1';
+            str_p++;
+        } else {
+            str[str_p] = '0';
+            str_p++;
+        }
+        mask = mask >> 1;
+    }
+
+    for (; bit % 8; bit++) {
+        if (bit && (!(bit % 4))) {
+            str[str_p] = ' ';
+            str_p++;
+        }
+        str[str_p] = '.';
+        str_p++;
+    }
+    return str;
+}
+
+char *
+Add_Bits_Format_Value(skbufTypeDef *skb,
+                      const uint32_t bit_offset,
+                      const uint32_t no_of_bits,
+                      char *value_str)
+{
+    char     *str = NULL;
+    uint64_t value = 0;
+
+    if (no_of_bits == 0) {
+        printf("has a bit width of 0\n");
+    }
+
+    if (no_of_bits < 65) {
+        value = Get_Bits64(skb, bit_offset, no_of_bits);
+    } else {
+        printf("has a bit width of %u > 65", no_of_bits);
+        return NULL;
+    }
+
+    str = Decode_Bits_IN_Field(bit_offset, no_of_bits, value);
+    strcat(str, value_str);
+
+    return str;
+}
+
+const char *
+UINT_Bits_Format_Value(skbufTypeDef *skb,
+                       const uint32_t bit_offset,
+                       const uint32_t no_of_bits,
+                       const char *format, ...)
+{
+    va_list ap;
+    static char dst[128];           /* static, May overflow */
+
+    memset(dst, 0, sizeof(dst));
+
+    va_start(ap, format);
+    vsnprintf(dst, sizeof(dst), format, ap);
+    va_end(ap);
+
+    return Add_Bits_Format_Value(skb, bit_offset, no_of_bits, dst);
+}
+
+int Dissect_ESP(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
+{
+    int ret = SECERR_OK;
+    /* get esp info */
+    pinfo->espBufLen      = skb->realDataLen;
+    pinfo->espHdrLen      = 8;
+    pinfo->espIVLen       = 8;
+    pinfo->espTrailerLen  = 2;
     /* The ICV consists solely of the AES-GCM Authentication Tag.
-     Implementations MUST support a full-length 16-octet ICV, and MAY
-     support 8 or 12 octet ICVs, and MUST NOT support other ICV lengths. */
-    ipsec->espICVLen     = 16;
+    Implementations MUST support a full-length 16-octet ICV, and MAY
+    support 8 or 12 octet ICVs, and MUST NOT support other ICV lengths. */
+    pinfo->espICVLen      = 16;
+    pinfo->espPayloadLen  = pinfo->espBufLen -
+                            pinfo->espHdrLen -
+                            pinfo->espIVLen -
+                            pinfo->espICVLen;
+    pinfo->espBuf         = skb->realData;
+    pinfo->espHdr         = pinfo->espBuf;
+    pinfo->espIV          = pinfo->espHdr + pinfo->espHdrLen;
+    pinfo->espPayload     = pinfo->espBuf +
+                            pinfo->espHdrLen +
+                            pinfo->espIVLen;
+    pinfo->espTrailer     = pinfo->espBuf +
+                            pinfo->espHdrLen +
+                            pinfo->espIVLen +
+                            (pinfo->espPayloadLen - pinfo->espTrailerLen);
+    pinfo->espICV         = pinfo->espBuf +
+                            pinfo->espHdrLen +
+                            pinfo->espIVLen +
+                            pinfo->espPayloadLen;
 
-    ipsec->espPayload    = ipsec->espBuf +
-                           ipsec->espHdrLen +
-                           ipsec->espIVLen;
-    ipsec->espPayloadLen = ipsec->espBufLen -
-                           ipsec->espHdrLen -
-                           ipsec->espIVLen -
-                           ipsec->espTrailerLen -
-                           ipsec->espICVLen;
-    ipsec->espICV        = ipsec->espBuf +
-                           ipsec->espHdrLen +
-                           ipsec->espIVLen +
-                           ipsec->espPayloadLen +
-                           ipsec->espTrailerLen;
-
-    {
+    switch (pinfo->direction) {
+    case INBOUND: {
         uint32_t spi = 0;
         uint32_t sequenceNumber;
 
-        spi = Get_ntohl(&frame->skBuf, 0);
-        sequenceNumber = Get_ntohl(&frame->skBuf, 4);
+        spi                   = ntoh32(pinfo->espHdr);
+        sequenceNumber        = ntoh32(pinfo->espHdr + 4);
 
         printf("    Encapsulating Security Payload \n"
                "      ESP SPI: 0x%08x (%u) \n"
                "      ESP Sequence: %u \n",
                spi, spi,
                sequenceNumber);
+    }
+    break;
+    case OUTBOUND: {
+        uint64_t iv;
+        uint32_t spi = 0;
+        uint32_t sequenceNumber;
+        uint8_t esp_Pad_Len;
+        uint8_t encapsulated_Protocol;
 
-        switch (ipsec->direction)
-        {
-            case INBOUND:
-                {
-                }
-                break;
-            case OUTBOUND:
-                {
-                    uint64_t iv;
-                    uint8_t esp_Pad_Len;
-                    uint8_t encapsulated_Protocol;
+        spi                   = ntoh32(pinfo->espHdr);
+        sequenceNumber        = ntoh32(pinfo->espHdr + 4);
+        iv                    = ntoh64(pinfo->espIV);
+        esp_Pad_Len           = *pinfo->espTrailer;
+        encapsulated_Protocol = *(pinfo->espTrailer + 1);
 
-                    iv = Get_ntoh64(&frame->skBuf, ipsec->espHdrLen);
-                    esp_Pad_Len =
-                        Get_UINT8(
-                            &frame->skBuf,
-                            ipsec->espBufLen - (ipsec->espTrailerLen +
-                                                ipsec->espICVLen));
-                    encapsulated_Protocol =
-                        Get_UINT8(
-                            &frame->skBuf,
-                            ipsec->espBufLen - (ipsec->espTrailerLen +
-                                                ipsec->espICVLen + 1));
-                    printf("      ESP IV: %016lx \n"
-                           "      ESP Pad Length: %u \n"
-                           "      Next header: %s (0x%02x) \n"
-                           "      Authentication Data \n",
-                           iv,
-                           esp_Pad_Len,
-                           Val_To_StrConst(encapsulated_Protocol,
-                                           IPProtoVals,
-                                           "Unknown"),
-                           encapsulated_Protocol);
+        printf("    Encapsulating Security Payload \n"
+               "      ESP SPI: 0x%08x (%u) \n"
+               "      ESP Sequence: %u \n"
+               "      ESP IV: %016lx \n"
+               "      ESP Pad Length: %u \n"
+               "      Next header: %s (0x%02x) \n",
+               spi, spi,
+               sequenceNumber,
+               iv,
+               esp_Pad_Len,
+               Val_To_StrConst(encapsulated_Protocol, IPProtoVals, "Unknown"),
+               encapsulated_Protocol);
 
-                    frame->skBuf.realData    = frame->ipsec.espPayload;
-                    frame->skBuf.realDataLen = frame->ipsec.espPayloadLen - esp_Pad_Len;
-                    IP_Try_Dissect(frame, encapsulated_Protocol);
-                }
-                break;
-        }
+        pinfo->ipProto   = encapsulated_Protocol; /* get Next Header */
+        skb->realData    = pinfo->espPayload;
+        skb->realDataLen = pinfo->espPayloadLen -
+                           esp_Pad_Len -
+                           pinfo->espTrailerLen;
+
+        ret = IP_Try_Dissect(skb, pinfo);
+    }
+    break;
     }
 
-    return SECERR_OK;
+    return ret;
 }
 
-int Dissect_TCP(FrameTypeDef *frame)
+int Dissect_TCP(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
 {
     /* Minimum TCP header length. */
 #define TCPH_MIN_LEN            20
@@ -537,16 +604,16 @@ int Dissect_TCP(FrameTypeDef *frame)
     uint32_t optLen;
     TCP_HDRTypeDef tcph;
 
-    tcph.thSport = Get_ntohs(&frame->skBuf, 0);
-    tcph.thDport = Get_ntohs(&frame->skBuf, 2);
-    tcph.thSeq   = Get_ntohl(&frame->skBuf, 4);
-    tcph.thACK   = Get_ntohl(&frame->skBuf, 8);
-    th_Off_X2    = Get_UINT8(&frame->skBuf, 12);
+    tcph.thSport = Get_ntohs(skb, 0);
+    tcph.thDport = Get_ntohs(skb, 2);
+    tcph.thSeq   = Get_ntohl(skb, 4);
+    tcph.thACK   = Get_ntohl(skb, 8);
+    th_Off_X2    = Get_UINT8(skb, 12);
     tcph.thHLen  = hi_nibble(th_Off_X2) * 4;
-    tcph.thFlags = Get_ntohs(&frame->skBuf, 12) & TH_MASK;
-    tcph.thWin   = Get_ntohs(&frame->skBuf, 14);
-    tcph.thSum   = Get_ntohs(&frame->skBuf, 16);
-    tcph.thURP   = Get_ntohs(&frame->skBuf, 18);
+    tcph.thFlags = Get_ntohs(skb, 12) & TH_MASK;
+    tcph.thWin   = Get_ntohs(skb, 14);
+    tcph.thSum   = Get_ntohs(skb, 16);
+    tcph.thURP   = Get_ntohs(skb, 18);
 
     optLen = tcph.thHLen - TCPH_MIN_LEN; /* length of options, in bytes */
 
@@ -579,25 +646,34 @@ int Dissect_TCP(FrameTypeDef *frame)
 #undef TCPH_MIN_LEN
 }
 
-int IP_Try_Dissect(FrameTypeDef *frame, uint8_t ipProto)
+int Dissect_UDP(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
+{
+    /* FIXME */
+    return SECERR_OK;
+}
+
+int IP_Try_Dissect(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
 {
     int ret = SECERR_INVAL;
 
-    switch (ipProto)
-    {
-        case IP_PROTO_ESP:
-            ret = Dissect_ESP(frame);
-            break;
-        case IP_PROTO_TCP:
-            ret = Dissect_TCP(frame);
-            break;
-        default:
-            break;
+    switch (pinfo->ipProto) {
+    case IP_PROTO_ESP:
+        ret = Dissect_ESP(skb, pinfo);
+        break;
+    case IP_PROTO_TCP:
+        ret = Dissect_TCP(skb, pinfo);
+        break;
+    case IP_PROTO_UDP:
+        ret = Dissect_UDP(skb, pinfo);
+        break;
+    default:
+        printf("Bogus IP proto \n");
+        break;
     }
     return ret;
 }
 
-int dissect_IPv4(FrameTypeDef *frame)
+int dissect_IPv4(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
 {
     /* Minimum IP header length. */
 #define IPH_MIN_LEN             20
@@ -606,28 +682,36 @@ int dissect_IPv4(FrameTypeDef *frame)
     IPv4_HDRTypeDef iph;
     uint8_t srcStr[32], dstStr[32];
 
-    iph.ipVer = Get_Bits8(&frame->skBuf, 0, 4);
-    hLen = Get_Bits8(&frame->skBuf, 4, 4) * 4;  /* IP header length, in bytes */
-    if ((hLen < IPH_MIN_LEN))
-    {
+    iph.ipVer = Get_Bits8(skb, 0, 4);
+    hLen = Get_Bits8(skb, 4, 4) * 4;  /* IP header length, in bytes */
+    if ((hLen < IPH_MIN_LEN)) {
         printf("Bogus IP header length (%u, must be at least %u)",
                hLen, IPH_MIN_LEN);
         return SECERR_INVAL;
     }
 
-    iph.ipTOS   = Get_UINT8(&frame->skBuf, 1);
-    iph.ipLen   = Get_ntohs(&frame->skBuf, 2);
-    iph.ipID    = Get_ntohs(&frame->skBuf, 4);
-    iph.ipOff   = Get_ntohs(&frame->skBuf, 6);
-    iph.ipTTL   = Get_ntohs(&frame->skBuf, 8);
-    iph.ipProto = Get_UINT8(&frame->skBuf, 9);
-    iph.ipSum   = Get_ntohs(&frame->skBuf, 10);
-    setAddress(&iph.ipSrc, AT_IPv4, 4, frame->skBuf.realData + IPH_SRC);
-    setAddress(&iph.ipDst, AT_IPv4, 4, frame->skBuf.realData + IPH_DST);
-    frame->ip.ipDst[0] = Get_ntohl(&frame->skBuf, IPH_DST);
-
-    printf("    Internet Protocol Version %u, Src: %s, Dst: %s\n"
-           "      Differentiated Services Field: 0x%02x\n"
+    iph.ipTOS   = Get_UINT8(skb, IPH_TOS);
+    iph.ipLen   = Get_ntohs(skb, IPH_LEN);
+    iph.ipID    = Get_ntohs(skb, IPH_ID);
+    iph.ipOff   = Get_ntohs(skb, IPH_OFF);
+    iph.ipTTL   = Get_UINT8(skb, IPH_TTL);
+    iph.ipProto = Get_UINT8(skb, IPH_P);
+    iph.ipSum   = Get_ntohs(skb, IPH_SUM);
+    setAddress(&iph.ipSrc, AT_IPv4, 4, skb->realData + IPH_SRC);
+    setAddress(&iph.ipDst, AT_IPv4, 4, skb->realData + IPH_DST);
+    pinfo->dst[0] = Get_ntohl(skb, IPH_DST);
+    pinfo->addressType = AT_IPv4;
+    printf("    Internet Protocol Version %u, Src: %s, Dst: %s\n",
+           iph.ipVer,
+           IPV4_TOStr(&iph.ipSrc, srcStr, sizeof(srcStr)),
+           IPV4_TOStr(&iph.ipDst, dstStr, sizeof(dstStr)));
+    printf("      %s\n",
+           UINT_Bits_Format_Value(skb, 0, 4, " = Version: %u", iph.ipVer));
+    printf("      %s\n",
+           UINT_Bits_Format_Value(skb, 4, 4,
+                                  " = Header Length: %u bytes (%u)",
+                                  hLen, hLen >> 2));
+    printf("      Differentiated Services Field: 0x%02x\n"
            "      Total Length: %u\n"
            "      Identification: 0x%04x (%u)\n"
            "      Flags: 0x%04x\n"
@@ -636,9 +720,6 @@ int dissect_IPv4(FrameTypeDef *frame)
            "      Header checksum: 0x%04x\n"
            "      Source: %s\n"
            "      Destination: %s\n",
-           iph.ipVer,
-           IPV4_TOStr(&iph.ipSrc, srcStr, sizeof(srcStr)),
-           IPV4_TOStr(&iph.ipDst, dstStr, sizeof(dstStr)),
            iph.ipTOS,
            iph.ipLen,
            iph.ipID, iph.ipID,
@@ -649,51 +730,53 @@ int dissect_IPv4(FrameTypeDef *frame)
            IPV4_TOStr(&iph.ipSrc, srcStr, sizeof(srcStr)),
            IPV4_TOStr(&iph.ipDst, dstStr, sizeof(dstStr)));
 
-    frame->ip.len = IPH_MIN_LEN;
-    frame->skBuf.realData    += frame->ip.len;
-    frame->skBuf.realDataLen -= frame->ip.len;
-    return IP_Try_Dissect(frame, iph.ipProto);
+    pinfo->ipLen      = IPH_MIN_LEN;
+    pinfo->ipProto    = iph.ipProto;
+    skb->realData    += pinfo->ipLen;
+    skb->realDataLen -= pinfo->ipLen;
+    return IP_Try_Dissect(skb, pinfo);
 
 #undef IPH_MIN_LEN
 }
 
-int dissect_IPv6(FrameTypeDef *frame)
+int dissect_IPv6(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
 {
     /* FIXME */
     return SECERR_OK;
 }
 
-int Dissect_IP(FrameTypeDef *frame)
+int Dissect_IP(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
 {
     uint8_t version;
     int ret = SECERR_INVAL;
 
-    version = *frame->skBuf.realData >> 4;
-    switch (version)
-    {
-        case 4:
-            ret = dissect_IPv4(frame);
-            break;
-        case 6:
-            ret = dissect_IPv6(frame);
-            break;
-        default:
-            printf("Bogus IP version (%u)", version);
-            break;
+    version = *skb->realData >> 4;
+    switch (version) {
+    case 4:
+        ret = dissect_IPv4(skb, pinfo);
+        break;
+    case 6:
+        ret = dissect_IPv6(skb, pinfo);
+        break;
+    default:
+        printf("Bogus IP version (%u)", version);
+        break;
     }
     return ret;
 }
 
-int Dissect_Ethernet(FrameTypeDef *frame)
+int Dissect_Ethernet(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
 {
+    /* Minimum ETH header length. */
+#define ETHH_MIN_LEN             14
 
     uint8_t srcStr[32];
     uint8_t dstStr[32];
     Eth_HDRTypeDef eHDR;
 
-    setAddress(&eHDR.dst, AT_ETHER, 6, frame->skBuf.realData);
-    setAddress(&eHDR.src, AT_ETHER, 6, frame->skBuf.realData + 6);
-    eHDR.type = ntoh16(frame->skBuf.realData + 12);
+    setAddress(&eHDR.dst, AT_ETHER, 6, skb->realData);
+    setAddress(&eHDR.src, AT_ETHER, 6, skb->realData + 6);
+    eHDR.type = ntoh16(skb->realData + 12);
 
     printf("    Ethernet II, Src: %s, Dst: %s\n"
            "      Type: %s (0x%04x)\n",
@@ -701,92 +784,97 @@ int Dissect_Ethernet(FrameTypeDef *frame)
            Ethernet_TOStr(&eHDR.dst, dstStr, sizeof(dstStr)),
            Val_To_StrConst(eHDR.type, EtypeVals, "Unknown"), eHDR.type);
 
-    frame->eth.len = 14;
-    frame->skBuf.realData    += frame->eth.len;
-    frame->skBuf.realDataLen -= frame->eth.len;
-    return Dissect_IP(frame);
+    pinfo->ethLen     = ETHH_MIN_LEN;
+    skb->realData    += pinfo->ethLen;
+    skb->realDataLen -= pinfo->ethLen;
+    return Dissect_IP(skb, pinfo);
+
+#undef ETHH_MIN_LEN
 }
 
-int Dissect_Frame(FrameTypeDef *frame)
+int Dissect_Frame(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
 {
-    printf("  Frame: %u bytes on wire \n", frame->skBuf.dataLen);
+    printf("  Frame: %u bytes on wire \n", skb->dataLen);
 
-    frame->skBuf.realData = frame->skBuf.data;
-    frame->skBuf.realDataLen = frame->skBuf.dataLen;
-    return Dissect_Ethernet(frame);
+    skb->realData    = skb->data;
+    skb->realDataLen = skb->dataLen;
+    return Dissect_Ethernet(skb, pinfo);
 }
 #else
 __STATIC_FORCEINLINE
-int Dissect_ESP(FrameTypeDef *frame)
+int Dissect_ESP(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
 {
-    IPSecTypeDef *ipsec  = &frame->ipsec;
-
-    ipsec->espBuf        = frame->skBuf.data    + frame->eth.len + frame->ip.len;
-    ipsec->espBufLen     = frame->skBuf.dataLen - frame->eth.len - frame->ip.len;
-    ipsec->espHdrLen     = 8;
-    ipsec->espIVLen      = 8;
-    ipsec->espTrailerLen = 2;
+    /* get esp info */
+    pinfo->espBufLen     = skb->dataLen - pinfo->ethLen - pinfo->ipLen;
+    pinfo->espHdrLen     = 8;
+    pinfo->espIVLen      = 8;
+    pinfo->espTrailerLen = 2;
     /* The ICV consists solely of the AES-GCM Authentication Tag.
-     Implementations MUST support a full-length 16-octet ICV, and MAY
-     support 8 or 12 octet ICVs, and MUST NOT support other ICV lengths. */
-    ipsec->espICVLen     = 16;
+    Implementations MUST support a full-length 16-octet ICV, and MAY
+    support 8 or 12 octet ICVs, and MUST NOT support other ICV lengths. */
+    pinfo->espICVLen     = 16;
+    pinfo->espPayloadLen = pinfo->espBufLen -
+                           pinfo->espHdrLen -
+                           pinfo->espIVLen -
+                           pinfo->espICVLen;
+    pinfo->espBuf        = skb->data    + pinfo->ethLen + pinfo->ipLen;
+    pinfo->espHdr        = pinfo->espBuf;
+    pinfo->espIV         = pinfo->espHdr + pinfo->espHdrLen;
+    pinfo->espPayload    = pinfo->espBuf +
+                           pinfo->espHdrLen +
+                           pinfo->espIVLen;
+    pinfo->espTrailer    = pinfo->espBuf +
+                           pinfo->espHdrLen +
+                           pinfo->espIVLen +
+                           (pinfo->espPayloadLen - pinfo->espTrailerLen);
+    pinfo->espICV        = pinfo->espBuf +
+                           pinfo->espHdrLen +
+                           pinfo->espIVLen +
+                           pinfo->espPayloadLen;
 
-    ipsec->espPayload    = ipsec->espBuf +
-                           ipsec->espHdrLen +
-                           ipsec->espIVLen;
-    ipsec->espPayloadLen = ipsec->espBufLen -
-                           ipsec->espHdrLen -
-                           ipsec->espIVLen -
-                           ipsec->espTrailerLen -
-                           ipsec->espICVLen;
-    ipsec->espICV        = ipsec->espBuf +
-                           ipsec->espHdrLen +
-                           ipsec->espIVLen +
-                           ipsec->espPayloadLen +
-                           ipsec->espTrailerLen;
+    pinfo->ipProto = *(pinfo->espTrailer + 1); /* get Next Header */
     return SECERR_OK;
 }
 
 __STATIC_FORCEINLINE
-int IP_Try_Dissect(FrameTypeDef *frame, uint8_t ipProto)
+int IP_Try_Dissect(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
 {
     int ret = SECERR_INVAL;
 
-    switch (ipProto)
-    {
-        case IP_PROTO_ESP:
-            ret = Dissect_ESP(frame);
-            break;
-        default:
-            printf("Bogus IP proto \n");
-            break;
+    switch (pinfo->ipProto) {
+    case IP_PROTO_ESP:
+        ret = Dissect_ESP(skb, pinfo);
+        break;
+    default:
+        printf("Bogus IP proto \n");
+        break;
     }
 
     return ret;
 }
 
-int Dissect_Frame(FrameTypeDef *frame)
+int Dissect_Frame(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
 {
     int ret = SECERR_INVAL;
 
-    frame->eth.len = 14;
+    pinfo->ethLen = 14; /* Minimum ETH header length. */
 
     /* IP version(v4 or v6) */
-    switch (*(frame->skBuf.data + frame->eth.len) >> 4)
-    {
-        case 4:
-            frame->ip.addressType = AT_IPv4;
-            frame->ip.len = 20; /* Minimum IP header length. */
-            frame->ip.ipDst[0] = ntoh32(frame->skBuf.data + frame->eth.len + IPH_DST);
-            ret = IP_Try_Dissect(frame, *(frame->skBuf.data + frame->eth.len + IPH_P));
-            break;
-        case 6:
-            /* FIXME */
-            frame->ip.addressType = AT_IPv6;
-            break;
-        default:
-            printf("Bogus IP version \n");
-            break;
+    switch (*(skb->data + pinfo->ethLen) >> 4) {
+    case 4:
+        pinfo->addressType = AT_IPv4;
+        pinfo->ipLen       = 20; /* Minimum IP header length. */
+        pinfo->dst[0]      = ntoh32(skb->data + pinfo->ethLen + IPH_DST);
+        pinfo->ipProto     = *(skb->data + pinfo->ethLen + IPH_P);
+        ret = IP_Try_Dissect(skb, pinfo);
+        break;
+    case 6:
+        /* FIXME */
+        pinfo->addressType = AT_IPv6;
+        break;
+    default:
+        printf("Bogus IP version \n");
+        break;
     }
 
     return ret;

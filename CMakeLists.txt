@@ -23,7 +23,7 @@ endif(WIN32)
 # set(CMAKE_BUILD_TYPE "Release")
 project(test)
 #debug
-set(DEBUG 1)
+set(DEBUG 0)
 
 # app 
 set(HELLO_WORLD_APP 0)

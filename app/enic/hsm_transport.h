@@ -335,6 +335,12 @@
         write32((csr) + RING_CSR_QUEUE_CTRL, (value));                         \
     } while (0)
 
+#define WRITE_RING_CSR_QUEUE_IE(csr, value)                                    \
+    do                                                                         \
+    {                                                                          \
+        write32((csr) + RING_CSR_QUEUE_IE, (value));                           \
+    } while (0)
+
 #define WRITE_RING_CSR_INC(csr, value)                                         \
     do                                                                         \
     {                                                                          \
@@ -360,28 +366,60 @@
         write32((csr) + RING_CSR_RING_TAIL_INDEX, (value));                    \
     } while (0)
 
+#define READ_RING_CSR_QUEUE_CTRL(csr)                                          \
+    read32((csr) + RING_CSR_QUEUE_CTRL)
+
+#define READ_RING_CSR_QUEUE_IE(csr)                                            \
+    read32((csr) + RING_CSR_QUEUE_IE)
+
+#define READ_RING_CSR_QUEUE_ISR(csr)                                           \
+    read32((csr) + RING_CSR_QUEUE_ISR)
+
+#define READ_RING_CSR_QUEUE_LSR(csr)                                           \
+    read32((csr) + RING_CSR_QUEUE_LSR)
+
+#define READ_RING_CSR_INTC(csr)                                                \
+    read32((csr) + RING_CSR_INTC)
+
+#define READ_RING_CSR_DESC_CTRL(csr)                                           \
+    read32((csr) + RING_CSR_DESC_CTRL)
+
+#define READ_RING_CSR_BASE_L(csr)                                              \
+    read32((csr) + RING_CSR_RING_BASE_L)
+
+#define READ_RING_CSR_BASE_H(csr)                                              \
+    read32((csr) + RING_CSR_RING_BASE_H)
+
 #define READ_RING_CSR_HEADER_INDEX(csr)                                        \
     read32((csr) + RING_CSR_RING_HEADER_INDEX)
 
-typedef struct
-{
+#define READ_RING_CSR_TAIL_INDEX(csr)                                          \
+    read32((csr) + RING_CSR_RING_TAIL_INDEX)
+
+#define READ_RING_CSR_BUFFER_CTRL(csr)                                         \
+    read32((csr) + RING_CSR_BUFFER_CTRL)
+
+#define READ_RING_CSR_TPH_CTRL(csr)                                            \
+    read32((csr) + RING_CSR_TPH_CTRL)
+
+#define READ_RING_CSR_FUNC_ID(csr)                                             \
+    read32((csr) + RING_CSR_FUNC_ID)
+
+typedef struct {
     uint32_t header0;
     uint32_t header1;
 } Ring_HdrTypedef;
 
-typedef struct
-{
+typedef struct {
     uint64_t srcData;
     uint64_t dstData;
 } Ring_MidTypedef;
 
-typedef struct
-{
+typedef struct {
     uint64_t contextAddr;
 } Ring_ContextTypedef;
 
-typedef struct
-{
+typedef struct {
     /* LWs 0-1 */
     Ring_HdrTypedef hdr;
 
@@ -392,8 +430,7 @@ typedef struct
     Ring_ContextTypedef context;
 
     /* LWs 8-15 */
-    struct
-    {
+    struct {
         uint64_t opaqueData;
         uint64_t resrvd1;
         uint64_t resrvd2;

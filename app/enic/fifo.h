@@ -2,10 +2,9 @@
 #ifndef __FIFO_H
 #define __FIFO_H
 
-#include "constant_ops.h"
+#include "priv.h"
 
-struct __kfifo
-{
+struct __kfifo {
     unsigned int in;
     unsigned int out;
     unsigned int mask;
@@ -161,7 +160,6 @@ struct __kfifo
         __ret;                                                                 \
     })
 
-
 /**
  * kfifo_peek - get data from the fifo without removing
  * @fifo: address of the fifo to be used
@@ -188,16 +186,15 @@ struct __kfifo
         __ret;                                                                 \
     })
 
-
 /**
  * kfifo_prepare - get in address from the fifo without removing
  * @fifo: address of the fifo to be used
  * @val: address where to store the data
  */
-#define kfifo_prepare(fifo, val)                                               \
+#define kfifo_prepare(fifo)                                                    \
     ({                                                                         \
-        unsigned int __ret;                                                    \
-        __ret;                                                                 \
+        typeof((fifo) + 1) __tmp = (fifo);                                     \
+        __tmp->buf;                                                            \
     })
 
 /**

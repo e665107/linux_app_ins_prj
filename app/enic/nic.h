@@ -32,12 +32,12 @@
 #define NIC_DMA_IN_CH_NUM           2
 #define NIC_DMA_OUT_CH_NUM          2
 #define NIC_DMA_CH_NUM              (NIC_DMA_IN_CH_NUM + NIC_DMA_OUT_CH_NUM)
-#define NIC_PER_DMA_DESC_NUM        (NIC_SHADOW_TXDESC_PER_QUEUE)
+#define NIC_DMA_DESC_NUM        (NIC_SHADOW_TXDESC_PER_QUEUE) * 8
 
 #define NIC_PBUF_NUM                2
 #define NIC_PBUF_LEN                100
 
-#define NIC_AT_TABLE_ENTIES         40
+#define NIC_AT_TABLE_ENTIES         64   /* MAX 128, if we use two gmac this valuse must be 128 */
 #define NIC_REAL_REG_SPACE          0xD00
 
 /* fake register base address in RAM, total size = 1K, 512B per GMAC, upward grow*/

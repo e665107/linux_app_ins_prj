@@ -4,7 +4,8 @@
 
 #include <stdint.h>
 #include <assert.h>
-#include "constant_ops.h"
+
+#include "priv.h"
 
 typedef enum
 {

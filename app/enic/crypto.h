@@ -2,22 +2,15 @@
 #ifndef _CRYPTO_H
 #define _CRYPTO_H
 
-#define IV_MAX            12
+#include <stdbool.h>
 
-typedef void (*CY_SymCbFunc)(intptr_t callbackTag);
+#include "priv.h"
 
-typedef struct
-{
-    uint32_t dataLen;
-    uint8_t *data;
-} FlatBufferTypedef;
+#define IV_MAX              12
 
-typedef struct
-{
-    uint32_t numBuffers;
-    FlatBufferTypedef *Buffers;
-    void *privateMetaData;
-} BufferListTypedef;
+typedef void (*CY_SymCbFunc)(intptr_t callbackTag,
+                             int status,
+                             bool verifyResult);
 
 typedef struct
 {
@@ -28,6 +21,7 @@ typedef struct
     uint32_t ivLen;
     uint8_t *aad;
     uint32_t aadLen;
+    bool verifyDigest;
     uint8_t *digest;
     uint32_t digestLen;
 } CY_Sym_OpDataTypedef;
