@@ -2,18 +2,15 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
-#include "uart_thread.h"
-#include "bsp_ttyusb0.h"
+#include "enic_thread.h"
+#include "test.h"
 
-void *thread_0(void *arg)
+void *thread_enic(void *arg)
 {
     char buf[]="hello world";
 
-    printf("Thread0 is created\n");
+    printf("Thread_enic is created\n");
 
-#ifdef DBLIST_FUNC
-    dblist_test();
-#endif // DBLIST_FUNC
 #ifdef SORT_FUNC
     sort_t();
 #endif // MACRO
@@ -26,15 +23,14 @@ void *thread_0(void *arg)
 #ifdef BIG_LITTLE_ENDIAN_FUNC
     big_little_endian_t();
 #endif // MACRO
-    for(;;)
-    {
-        uart_send(serial_fd, buf, 10);
-        sleep(2);
-        printf("Thread0 is running\n");
-    }
+
+    sampleTest();
+
+    printf("sampleTest is over\n");
+
+    printf("exit thread_enic\n");
 
     exit(EXIT_SUCCESS);
-    
 }
 
 void *thread(void *arg)
@@ -43,39 +39,30 @@ void *thread(void *arg)
     char buf1[20];
 
     newthid = pthread_self();
-    
+
     printf("The size of newthid is %d\n", sizeof(newthid));
     printf("this is a new thread, thread ID = %d\n", newthid);
 
     for(;;)
     {
-        uart_recv(serial_fd, buf1, 20);
         printf("%s\n", buf1);
-
         sleep(2);
         printf("Thread is running\n");
-   
     }
-    
+
     exit(EXIT_SUCCESS);
 }
 
-int create_uart_threads(void)
+int create_enic_threads(void)
 {
     pthread_t th_id;
     pthread_t th_id0;
-    
+
     int status;
-    
+
     printf("main thread ,ID is %d\n", pthread_self());
-     
-    if (pthread_create(&th_id, NULL, (void *)thread, NULL) != 0)
-    {
-        printf("thread creation failed\n");
-         exit(EXIT_FAILURE);
-    }
-    
-    if (pthread_create(&th_id0, NULL, (void *)thread_0, NULL) != 0)
+
+    if (pthread_create(&th_id0, NULL, (void *)thread_enic, NULL) != 0)
     {
         printf("thread_0 creation failed\n");
         exit(EXIT_FAILURE);
@@ -89,6 +76,3 @@ int create_uart_threads(void)
     pthread_join(th_id0, NULL);
     exit(EXIT_SUCCESS);
 }
-
-
-

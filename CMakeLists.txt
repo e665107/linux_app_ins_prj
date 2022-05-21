@@ -22,8 +22,7 @@ endif(WIN32)
 # set(CMAKE_SIZE arm-none-eabi-size)
 # set(CMAKE_BUILD_TYPE "Release")
 project(test)
-#debug
-set(DEBUG 0)
+
 
 # app 
 set(HELLO_WORLD_APP 0)

@@ -15,7 +15,6 @@
 #include "fifo.h"
 #endif
 
-#define DEBUG
 #define IPSEC_MAX_SA_COUNT      32
 #define IPSEC_MAX_RX_IP_COUNT   32
 
@@ -74,7 +73,7 @@ void Dump_MSG(intptr_t msg)
             {
                 char buf[64];
                 MSG_RxSAMsgTypeDef *rsa =
-                    (MSG_RxSAMsgTypeDef *)(msg + MSG_HEADER);
+                        (MSG_RxSAMsgTypeDef *)(msg + MSG_HEADER);
 
                 printf("MSG_RX_SA_ADD:working\n");
 
@@ -94,7 +93,7 @@ void Dump_MSG(intptr_t msg)
             {
                 char buf[64];
                 MSG_TxSAMsgTypeDef *tsa =
-                    (MSG_TxSAMsgTypeDef *)(msg + MSG_HEADER);
+                        (MSG_TxSAMsgTypeDef *)(msg + MSG_HEADER);
 
                 printf("MSG_TX_SA_ADD:working\n");
 
@@ -128,7 +127,7 @@ void Dump_MSG(intptr_t msg)
             {
                 char buf[64];
                 MSG_TxSAMsgTypeDef *tsa =
-                    (MSG_TxSAMsgTypeDef *)(msg + MSG_HEADER);
+                        (MSG_TxSAMsgTypeDef *)(msg + MSG_HEADER);
 
                 printf("MSG_TX_SA_DEL:working\n");
 
@@ -272,7 +271,7 @@ void SA_ADD(intptr_t msg, int direction)
         case INBOUND:
             {
                 MSG_RxSAMsgTypeDef *rsa =
-                    (MSG_RxSAMsgTypeDef *)(msg + MSG_HEADER);
+                        (MSG_RxSAMsgTypeDef *)(msg + MSG_HEADER);
 
                 SA_RX_Insert(rsa);
                 /* hash the new entry for faster search in Rx path */
@@ -285,7 +284,7 @@ void SA_ADD(intptr_t msg, int direction)
         case OUTBOUND:
             {
                 MSG_TxSAMsgTypeDef *tsa =
-                    (MSG_TxSAMsgTypeDef *)(msg + MSG_HEADER);
+                        (MSG_TxSAMsgTypeDef *)(msg + MSG_HEADER);
 
                 SA_TX_Insert(tsa);
                 /* done */
@@ -306,7 +305,7 @@ void SA_DEL(intptr_t msg, int direction)
         case INBOUND:
             {
                 MSG_RxSAMsgTypeDef *rsa =
-                    (MSG_RxSAMsgTypeDef *)(msg + MSG_HEADER);
+                        (MSG_RxSAMsgTypeDef *)(msg + MSG_HEADER);
 
                 SA_RX_Insert(rsa);
                 hash_del(&rx_tbl[rsa->sa_ind].hlist);
@@ -318,7 +317,7 @@ void SA_DEL(intptr_t msg, int direction)
         case OUTBOUND:
             {
                 MSG_TxSAMsgTypeDef *tsa =
-                    (MSG_TxSAMsgTypeDef *)(msg + MSG_HEADER);
+                        (MSG_TxSAMsgTypeDef *)(msg + MSG_HEADER);
 
                 SA_TX_Insert(tsa);
                 /* done */
@@ -339,9 +338,9 @@ RX_SATypedef *Find_RX_SA(uint32_t *daddr, uint32_t spi, int ip4)
     hash_for_each_possible(rx_sa_list, rsa, hlist, spi)
     {
         if (spi == rsa->spi &&
-                ((ip4 && *daddr == ip_tbl[rsa->iptbl_ind].ipaddr[0]) ||
-                 (!ip4 && !memcmp(daddr, ip_tbl[rsa->iptbl_ind].ipaddr,
-                                  sizeof(ip_tbl[rsa->iptbl_ind].ipaddr)))))
+            ((ip4 && *daddr == ip_tbl[rsa->iptbl_ind].ipaddr[0]) ||
+             (!ip4 && !memcmp(daddr, ip_tbl[rsa->iptbl_ind].ipaddr,
+                              sizeof(ip_tbl[rsa->iptbl_ind].ipaddr)))))
         {
             ret = rsa;
             break;
@@ -497,22 +496,22 @@ void ESP_TRANSPORT(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo, void *sa)
     }
 
     switch (pinfo->direction) {
-    case INBOUND: {      /* decryption */
-        RX_SATypedef *rsa = (RX_SATypedef *)sa;
+        case INBOUND: {      /* decryption */
+            RX_SATypedef *rsa = (RX_SATypedef *)sa;
 
-        key = rsa->key;
-        salt = &rsa->salt;
-        opData.direction   = INBOUND;
-    }
-    break;
-    case OUTBOUND: {     /* encryption */
-        TX_SATypedef *tsa = (TX_SATypedef *)sa;
+            key = rsa->key;
+            salt = &rsa->salt;
+            opData.direction   = INBOUND;
+        }
+            break;
+        case OUTBOUND: {     /* encryption */
+            TX_SATypedef *tsa = (TX_SATypedef *)sa;
 
-        key = tsa->key;
-        salt = &tsa->salt;
-        opData.direction   = OUTBOUND;
-    }
-    break;
+            key = tsa->key;
+            salt = &tsa->salt;
+            opData.direction   = OUTBOUND;
+        }
+            break;
     }
 
     /* buffer list */
@@ -596,12 +595,12 @@ void IPSec_Encryption(intptr_t msg)
                 case IP_PROTO_TCP:
                     if (!!GET_FLAG(enc->desc->desc1, 2))
                         *(uint16_t *)(skb.data + pinfo.ethLen + IPH_SUM) =
-                            TCP_Cksum(&skb, &pinfo);
+                                TCP_Cksum(&skb, &pinfo);
                     break;
                 case IP_PROTO_UDP:
                     if (!!GET_FLAG(enc->desc->desc1, 3))
                         *(uint16_t *)(skb.data + pinfo.ethLen + IPH_SUM) =
-                            UDP_Cksum(&skb, &pinfo);
+                                UDP_Cksum(&skb, &pinfo);
                     break;
             }
 
@@ -643,7 +642,7 @@ void IPSec_Decryption(intptr_t msg)
                   Find_RX_SA(pinfo.dst,
                              ntoh32(pinfo.espHdr),
                              pinfo.addressType == AT_IPv4 ? 1 : 0)
-                 );
+                  );
     return;
 
 drop:
@@ -662,12 +661,12 @@ void IPSec_Decryption(intptr_t msg)
     Packet_InfoTypeDef pinfo;
 
     MSG_DECMsgTypeDef *dec = (MSG_DECMsgTypeDef *)(msg + MSG_HEADER);
-    
+
     skb.data        = (uint8_t *)(intptr_t)dec->desc->desc9;
     skb.dataLen     = GET_FIELD(dec->desc->desc0, 0, 0x3fff);
     skb.opaque      = msg;
     pinfo.direction = INBOUND;
-    
+
     ret = Dissect_Frame(&skb, &pinfo);
     /* if ((!!ret)) */
     /*     goto drop; */
@@ -677,7 +676,7 @@ void IPSec_Decryption(intptr_t msg)
                   Find_RX_SA(pinfo.dst,
                              ntoh32(pinfo.espHdr),
                              pinfo.addressType == AT_IPv4 ? 1 : 0)
-                 );
+                  );
     return;
 
 drop:

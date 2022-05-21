@@ -1,4 +1,5 @@
 
+#include "test.h"
 #ifdef TEST
 
 #include "msg.h"
@@ -271,11 +272,11 @@ static void sample_OneMsgMultiSlices_DecTest(void)
 
 void sampleTest(void)
 {
-    sample_SATest();
-    sample_SARxLookupTest();
-    sample_EncTest();
-    sample_DecTest();
-    /* sample_OneMsgMultiSlices_DecTest(); */
+    /* sample_SATest(); */
+    /* sample_SARxLookupTest(); */
+    /* sample_EncTest(); */
+    /* sample_DecTest(); */
+    sample_OneMsgMultiSlices_DecTest();
     return;
 }
 

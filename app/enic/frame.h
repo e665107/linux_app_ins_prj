@@ -3,7 +3,6 @@
 #define _FRAME_H
 
 #include "address.h"
-#define DEBUG
 enum
 {
     OUTBOUND = 0,                   /* TX, Encryption */
@@ -68,11 +67,3 @@ typedef struct {
 } skbufTypeDef;
 
 #endif /* _FRAME_H */
-
-
-
-
-
-
-
-

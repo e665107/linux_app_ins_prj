@@ -1,4 +1,3 @@
-#define TEST
 #ifdef TEST
 
 #ifndef __TEST_H

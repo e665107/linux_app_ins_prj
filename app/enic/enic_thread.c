@@ -40,8 +40,8 @@ void *thread(void *arg)
 
     newthid = pthread_self();
 
-    printf("The size of newthid is %d\n", sizeof(newthid));
-    printf("this is a new thread, thread ID = %d\n", newthid);
+    printf("The size of newthid is %ld\n", sizeof(newthid));
+    printf("this is a new thread, thread ID = %ld\n", newthid);
 
     for(;;)
     {
@@ -60,7 +60,7 @@ int create_enic_threads(void)
 
     int status;
 
-    printf("main thread ,ID is %d\n", pthread_self());
+    printf("main thread ,ID is %ld\n", pthread_self());
 
     if (pthread_create(&th_id0, NULL, (void *)thread_enic, NULL) != 0)
     {

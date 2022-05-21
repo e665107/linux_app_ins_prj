@@ -38,8 +38,8 @@
 #ifndef __RISCV_XLEN
   /** \brief Refer to the width of an integer register in bits(either 32 or 64) */
   #ifndef __riscv_xlen
-    #define __RISCV_XLEN    32
-  #else
+  #define __RISCV_XLEN    64
+#else
     #define __RISCV_XLEN    __riscv_xlen
   #endif
 #endif /* __RISCV_XLEN */
