@@ -34,4 +34,12 @@ ps -T -p 1092(进程ID)；可以先ps -a
 *** 
 *** 
 *** 
+* 
+** packages install
+*** mysql
+*** mqtt
+*** libevent
+*** libcurl
+*** openssl
 *** 
+

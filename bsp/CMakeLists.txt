@@ -16,6 +16,12 @@ set(SRCS
 )
 endif (${ENIC_APP})
 
+if (${QT_HELLO_WORLD_APP})
+set(SRCS
+    src/bsp_ttyusb0.c
+)
+endif (${QT_HELLO_WORLD_APP})
+
 if (${CHAT_SERVER_APP})
 set(SRCS
     src/bsp_ttyusb0.c

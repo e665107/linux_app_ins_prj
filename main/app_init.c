@@ -47,6 +47,9 @@
 #ifdef CHAT_SERVER_APP
 #include "chat_server_thread.h"
 #endif // MACRO
+#ifdef QT_HELLO_WORLD_APP
+#include "qt_hello_thread.h"
+#endif // MACRO
 
 
 void app_init(void)
@@ -71,6 +74,9 @@ void app_init(void)
 #endif // MACRO
 #ifdef CHAT_SERVER_APP
      create_chat_server_thread();
+#endif // MACRO
+#ifdef QT_HELLO_WORLD_APP
+     create_qt_hello_threads();
 #endif // MACRO
 
 }

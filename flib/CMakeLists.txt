@@ -17,6 +17,12 @@ if (${CHAT_SERVER_APP})
 )
 endif (${CHAT_SERVER_APP})
 
+if (${QT_HELLO_WORLD_APP})
+  set(SRCS
+    src/delay.c
+)
+endif (${QT_HELLO_WORLD_APP})
+
 if (${UART_COMMUNICATION_APP})
   set(SRCS
     src/delay.c

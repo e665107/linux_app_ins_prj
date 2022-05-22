@@ -5,4 +5,6 @@
 /* #undef HTTP_CLIENT_APP */
 /* #undef HTTPD_APP */
 /* #undef ENIC_APP */
-#define  CHAT_SERVER_APP
+/* #undef CHAT_SERVER_APP */
+#define  QT_HELLO_WORLD_APP
+

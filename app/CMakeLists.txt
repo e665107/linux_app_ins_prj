@@ -31,6 +31,13 @@ add_subdirectory(chat_server)
 endif (${CHAT_SERVER_APP})
 
 #qt relate apps
-if (${QT_APP})
-add_subdirectory(qt_apps)
-endif (${QT_APP})
+if (${QT_HELLO_WORLD_APP})
+add_subdirectory(qt_helloworld)
+endif (${QT_HELLO_WORLD_APP})
+
+
+
+
+
+
+

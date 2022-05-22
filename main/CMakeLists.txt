@@ -15,10 +15,12 @@ list(REMOVE_ITEM srcs ${mainfile})
 add_executable(test_app ${srcs} ${hdrs} ${mainfile})
 
 # target_link_libraries(test_app app_static  bsp_static comlib_static pthread )
-if (${QT_APP})
-target_link_libraries(test_app  Qt5::Widgets Qt5::Core Qt5::Gui  app_static)
-else()
-target_link_libraries(test_app  flib_static bsp_static app_static pthread crypt )
-endif (${QT_APP})
+target_link_libraries(test_app flib_static bsp_static app_static pthread crypt )
+
+# if (${QT_APP})
+# target_link_libraries(test_app  Qt5::Widgets Qt5::Core Qt5::Gui  app_static)
+# else()
+# target_link_libraries(test_app  flib_static bsp_static app_static pthread crypt )
+# endif (${QT_APP})
 
 

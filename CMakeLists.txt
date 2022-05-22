@@ -35,7 +35,7 @@ set(PWM_OUTPUT_APP 0)
 set(LED_TEST_APP 0)
 set(MODUBUS_APP 0)
 set(ENIC_APP 0)
-set(CHAT_SERVER_APP 1)
+set(CHAT_SERVER_APP 0)
 set(TEST_4 0)
 set(TEST_4 0)
 set(TEST_4 0)
@@ -46,7 +46,8 @@ set(TEST_4 0)
 
 
 #qt app
-set(QT_APP 0)
+set(QT_APP 1)
+set(QT_HELLO_WORLD_APP 1)
 
 # 复用插件
 include(${PROJECT_SOURCE_DIR}/cmake/extentions.cmake)
@@ -91,14 +92,10 @@ else()
 endif (${QT_APP})
 
 
-if (${QT_APP})
-add_subdirectory(app)
-else()
 add_subdirectory(app)  
 add_subdirectory(bsp)
 add_subdirectory(flib)
 add_subdirectory(main)
-endif (${QT_APP})
 
 configure_file(
   ${PROJECT_SOURCE_DIR}/main/app_config.h.in
