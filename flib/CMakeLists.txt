@@ -11,6 +11,12 @@ if (${ENIC_APP})
 )
 endif (${ENIC_APP})
 
+if (${CHAT_SERVER_APP})
+  set(SRCS
+    src/delay.c
+)
+endif (${CHAT_SERVER_APP})
+
 if (${UART_COMMUNICATION_APP})
   set(SRCS
     src/delay.c

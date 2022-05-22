@@ -16,6 +16,13 @@ set(SRCS
 )
 endif (${ENIC_APP})
 
+if (${CHAT_SERVER_APP})
+set(SRCS
+    src/bsp_ttyusb0.c
+)
+endif (${CHAT_SERVER_APP})
+
+
 
 if (${HTTPD_APP})
   set(SRCS

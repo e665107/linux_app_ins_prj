@@ -26,6 +26,10 @@ if (${ENIC_APP})
 add_subdirectory(enic)
 endif (${ENIC_APP})
 
+if (${CHAT_SERVER_APP})
+add_subdirectory(chat_server)
+endif (${CHAT_SERVER_APP})
+
 #qt relate apps
 if (${QT_APP})
 add_subdirectory(qt_apps)

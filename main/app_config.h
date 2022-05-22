@@ -4,4 +4,5 @@
 /* #undef NET_COMMUNICATION_APP */
 /* #undef HTTP_CLIENT_APP */
 /* #undef HTTPD_APP */
-#define  ENIC_APP
+/* #undef ENIC_APP */
+#define  CHAT_SERVER_APP

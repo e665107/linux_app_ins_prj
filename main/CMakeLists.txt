@@ -18,7 +18,7 @@ add_executable(test_app ${srcs} ${hdrs} ${mainfile})
 if (${QT_APP})
 target_link_libraries(test_app  Qt5::Widgets Qt5::Core Qt5::Gui  app_static)
 else()
-target_link_libraries(test_app  flib_static bsp_static app_static pthread crypt)
+target_link_libraries(test_app  flib_static bsp_static app_static pthread crypt )
 endif (${QT_APP})
 
 

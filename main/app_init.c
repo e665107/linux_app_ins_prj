@@ -44,6 +44,9 @@
 #ifdef ENIC_APP
 #include "enic_thread.h"
 #endif // MACRO
+#ifdef CHAT_SERVER_APP
+#include "chat_server_thread.h"
+#endif // MACRO
 
 
 void app_init(void)
@@ -66,5 +69,10 @@ void app_init(void)
 #ifdef ENIC_APP
      create_enic_threads();
 #endif // MACRO
+#ifdef CHAT_SERVER_APP
+     create_chat_server_thread();
+#endif // MACRO
 
 }
+
+

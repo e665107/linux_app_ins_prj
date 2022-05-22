@@ -34,7 +34,8 @@ set(HTTP_CLIENT_APP 0)
 set(PWM_OUTPUT_APP 0)
 set(LED_TEST_APP 0)
 set(MODUBUS_APP 0)
-set(ENIC_APP 1)
+set(ENIC_APP 0)
+set(CHAT_SERVER_APP 1)
 set(TEST_4 0)
 set(TEST_4 0)
 set(TEST_4 0)
@@ -66,6 +67,8 @@ include_directories(
 # lib directories
 link_directories(
   ${PROJECT_BINARY_DIR}/lib
+  /usr/local/lib
+  /usr/lib
 )
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
@@ -90,7 +93,6 @@ endif (${QT_APP})
 
 if (${QT_APP})
 add_subdirectory(app)
-  
 else()
 add_subdirectory(app)  
 add_subdirectory(bsp)

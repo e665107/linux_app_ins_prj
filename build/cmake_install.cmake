@@ -1,4 +1,4 @@
-# Install script for directory: /home/e66/gitee/linux_app_ins_prj
+# Install script for directory: /home/e66/gitee_prjs/linux_app_ins_prj
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -12,7 +12,7 @@ if(NOT DEFINED CMAKE_INSTALL_CONFIG_NAME)
     string(REGEX REPLACE "^[^A-Za-z0-9_]+" ""
            CMAKE_INSTALL_CONFIG_NAME "${BUILD_TYPE}")
   else()
-    set(CMAKE_INSTALL_CONFIG_NAME "Debug")
+    set(CMAKE_INSTALL_CONFIG_NAME "")
   endif()
   message(STATUS "Install configuration: \"${CMAKE_INSTALL_CONFIG_NAME}\"")
 endif()
@@ -39,10 +39,10 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
-  include("/home/e66/gitee/linux_app_ins_prj/build/app/cmake_install.cmake")
-  include("/home/e66/gitee/linux_app_ins_prj/build/bsp/cmake_install.cmake")
-  include("/home/e66/gitee/linux_app_ins_prj/build/flib/cmake_install.cmake")
-  include("/home/e66/gitee/linux_app_ins_prj/build/main/cmake_install.cmake")
+  include("/home/e66/gitee_prjs/linux_app_ins_prj/build/app/cmake_install.cmake")
+  include("/home/e66/gitee_prjs/linux_app_ins_prj/build/bsp/cmake_install.cmake")
+  include("/home/e66/gitee_prjs/linux_app_ins_prj/build/flib/cmake_install.cmake")
+  include("/home/e66/gitee_prjs/linux_app_ins_prj/build/main/cmake_install.cmake")
 
 endif()
 
@@ -54,5 +54,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/e66/gitee/linux_app_ins_prj/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/e66/gitee_prjs/linux_app_ins_prj/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
