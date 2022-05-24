@@ -23,31 +23,8 @@ endif(WIN32)
 # set(CMAKE_BUILD_TYPE "Release")
 project(test)
 
-
-# app 
-set(HELLO_WORLD_APP 0)
-set(STRUCTURE_APP 0)
-set(UART_COMMUNICATION_APP 0)
-set(NET_COMMUNICATION_APP 0)
-set(HTTPD_APP 0)
-set(HTTP_CLIENT_APP 0)
-set(PWM_OUTPUT_APP 0)
-set(LED_TEST_APP 0)
-set(MODUBUS_APP 0)
-set(ENIC_APP 0)
-set(CHAT_SERVER_APP 0)
-set(TEST_4 0)
-set(TEST_4 0)
-set(TEST_4 0)
-set(TEST_4 0)
-set(TEST_4 0)
-set(TEST_4 0)
-set(TEST_4 0)
-
-
-#qt app
-set(QT_APP 1)
-set(QT_HELLO_WORLD_APP 1)
+# applications 
+include(${PROJECT_SOURCE_DIR}/cmake/app.cmake)
 
 # 复用插件
 include(${PROJECT_SOURCE_DIR}/cmake/extentions.cmake)

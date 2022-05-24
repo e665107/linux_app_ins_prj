@@ -8,8 +8,9 @@
 
 void *thread_0(void *arg)
 {
-        qt_hello();
-        
+        /*
+         * qt_hello();
+         */
         for(;;)
         {
                 sleep(2);
@@ -20,6 +21,8 @@ void *thread_0(void *arg)
 
 void *thread(void *arg)
 {
+        qt_hello();
+
         for(;;)
         {
                 printf("Thread is running\n");
