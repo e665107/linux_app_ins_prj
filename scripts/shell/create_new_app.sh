@@ -1,5 +1,6 @@
 #!/bin/bash
    param=${2^^}
+   sed -i 's/APP\ 1/APP 0/' ./cmake/app.cmake
    sed -i "/set(HELLO_WORLD_APP 0)/a set("$param"_APP 1)" ./cmake/app.cmake
    cd app/
    sed -i '/endif\ (${HELLO_WORLD_APP})/a\if (${'"$param"'_APP})\
@@ -8,7 +9,16 @@ endif (${'"$param"'_APP})\
 ' CMakeLists.txt
    sed -i '/endif\ (${HELLO_WORLD_APP})/G' CMakeLists.txt
    mkdir -p $2
-   cp ./hello_world/CMakeLists.txt ./$2
+   cp ./test_app/CMakeLists.txt  ./$2
+   cp ./test_app/test_thread.c   ./$2
+   cp ./test_app/test_thread.h   ./$2
+   mv ./$2/test_thread.c ./$2/$2_thread.c
+   mv ./$2/test_thread.h ./$2/$2_thread.h
+   sed -i 's/TEST/'"$param"'/g' ./$2/$2_thread.h
+   sed -i 's/test/'"$2"'/' ./$2/$2_thread.h
+   sed -i 's/test_thread/'"$2"'_thread/' ./$2/$2_thread.c
+   sed -i 's/Thread\ is/Thread_'"$2"' is/' ./$2/$2_thread.c
+
    # add app sources
    cd ../bsp
    sed -i '/endif\ (${HELLO_WORLD_APP})/a\if (${'"$param"'_APP})\
@@ -26,7 +36,15 @@ endif (${'"$param"'_APP})' CMakeLists.txt
 #include \"'"$2"'_thread.h\"\
 #endif //'"$param"'_APP' app_init.c
    sed -i '/#endif\ \/\/ HELLO_WORLD_APP/a\#ifdef '"$param"'_APP\
-    create_'"$2"'_thread();\
+    create_'"$2"'_threads();\
 #endif //'"$param"'_APP' app_init.c
    cd ../
+
+
+
+
+
+
+
+
 

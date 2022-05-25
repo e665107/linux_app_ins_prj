@@ -1,5 +1,8 @@
  # app 
 set(HELLO_WORLD_APP 0)
+set(TEST9_APP 1)
+set(TEST8_APP 0)
+set(TEST7_APP 0)
 set(STRUCTURE_APP 0)
 set(UART_COMMUNICATION_APP 0)
 set(NET_COMMUNICATION_APP 0)
@@ -8,7 +11,7 @@ set(HTTP_CLIENT_APP 0)
 set(PWM_OUTPUT_APP 0)
 set(LED_TEST_APP 0)
 set(MODUBUS_APP 0)
-set(ENIC_APP 1)
+set(ENIC_APP 0)
 set(CHAT_SERVER_APP 0)
 set(MYSQL_ACCESS_APP 0)
 set(TEST_4 0)
@@ -18,8 +21,6 @@ set(TEST_4 0)
 set(TEST_4 0)
 set(TEST_4 0)
 set(TEST_4 0)
-
-
 
 
 #qt app

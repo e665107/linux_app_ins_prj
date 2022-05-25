@@ -26,4 +26,8 @@
 7. 在flib的CMakeLists.txt中做类似2的改变
 8. 在main的CMakeLists.txt中添加相应app要连接的静态库
 9. add the app name to the app_config.in.h
-*** apps
+*** auto creat app
+1. ./auto.sh clean
+2. ./auto.sh app app_name(eg.  test0)
+3. ./auto.sh  (compile)
+4. ./auto.sh run (run)

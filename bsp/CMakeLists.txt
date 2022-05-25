@@ -4,6 +4,19 @@ if (${HELLO_WORLD_APP})
 )
 endif (${HELLO_WORLD_APP})
 
+if (${TEST9_APP})
+set(SRCS src/bsp_ttyusb0.c)
+endif (${TEST9_APP})
+
+if (${TEST8_APP})
+set(SRCS src/bsp_ttyusb0.c)
+endif (${TEST8_APP})
+
+if (${TEST7_APP})
+set(SRCS src/bsp_ttyusb0.c)
+endif (${TEST7_APP})
+
+
 if (${UART_COMMUNICATION_APP})
 set(SRCS
     src/bsp_ttyusb0.c
