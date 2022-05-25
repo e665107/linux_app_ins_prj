@@ -1,5 +1,8 @@
 /* #undef HELLO_WORLD_APP */
-#define  TEST1_APP
+#define  HAPPY_HACK1_APP
+/* #undef HAPPY_HACK_APP */
+/* #undef QT_TST1_APP */
+/* #undef TEST1_APP */
 /* #undef STRUCTURE_APP */
 /* #undef UART_COMMUNICATION_APP */
 /* #undef NET_COMMUNICATION_APP */

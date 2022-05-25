@@ -1,4 +1,4 @@
-
+-
 #ifndef _HSM_TRANSPORT_H
 #define _HSM_TRANSPORT_H
 
@@ -440,4 +440,3 @@ typedef struct {
 } DescTypedef;
 
 #endif /* _HSM_TRANSPORT_H */
-

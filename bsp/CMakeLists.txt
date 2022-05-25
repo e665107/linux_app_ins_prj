@@ -4,6 +4,18 @@ if (${HELLO_WORLD_APP})
 )
 endif (${HELLO_WORLD_APP})
 
+if (${HAPPY_HACK1_APP})
+set(SRCS src/bsp_ttyusb0.c)
+endif (${HAPPY_HACK1_APP})
+
+if (${HAPPY_HACK_APP})
+set(SRCS src/bsp_ttyusb0.c)
+endif (${HAPPY_HACK_APP})
+
+if (${QT_TST1_APP})
+set(SRCS src/bsp_ttyusb0.c)
+endif (${QT_TST1_APP})
+
 if (${TEST1_APP})
 set(SRCS src/bsp_ttyusb0.c)
 endif (${TEST1_APP})

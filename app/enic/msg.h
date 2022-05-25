@@ -1,4 +1,4 @@
-#ifndef __MSG_H
+-#ifndef __MSG_H
 #define __MSG_H
 
 #include "nic.h"

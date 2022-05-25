@@ -1,4 +1,4 @@
-
+-
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
@@ -579,7 +579,7 @@ UINT_Bits_Format_Value(skbufTypeDef *skb,
 }
 
 #if 0
-int Dissect_ESP(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
+int Dissect_ESP(frameTableTypeDef *frameTable)
 {
     int ret = SECERR_OK;
     /* get esp info */
@@ -667,7 +667,7 @@ int Dissect_ESP(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
 #endif
 #if 0
 __STATIC_FORCEINLINE
-int Dissect_ESP(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
+int Dissect_ESP(frameTableTypeDef *frameTable)
 {
 #if 0
     /* get esp info */
@@ -828,7 +828,7 @@ int Dissect_ESP(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
 }
 #endif
 __STATIC_FORCEINLINE
-int Dissect_ESP(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
+int Dissect_ESP(frameTableTypeDef *frameTable)
 {
 #if 0
     /* get esp info */
@@ -870,7 +870,7 @@ int Dissect_ESP(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
     pinfo->ipProto = *(pinfo->espTrailer + 1); /* get Next Header */
     return SECERR_OK;
 }
-int Dissect_TCP(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
+int Dissect_TCP(frameTableTypeDef *frameTable)
 {
     /* Minimum TCP header length. */
 #define TCPH_MIN_LEN            20
@@ -921,25 +921,25 @@ int Dissect_TCP(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
 #undef TCPH_MIN_LEN
 }
 
-int Dissect_UDP(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
+int Dissect_UDP(frameTableTypeDef *frameTable)
 {
     /* FIXME */
     return SECERR_OK;
 }
 
-int IP_Try_Dissect(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
+int IP_Try_Dissect(frameTableTypeDef *frameTable)
 {
     int ret = SECERR_INVAL;
 
-    switch (pinfo->ipProto) {
+    switch (frameTable->frame[0].ip.ipProto) {
     case IP_PROTO_ESP:
-        ret = Dissect_ESP(skb, pinfo);
+        ret = Dissect_ESP(frameTable);
         break;
     case IP_PROTO_TCP:
-        ret = Dissect_TCP(skb, pinfo);
+        ret = Dissect_TCP(frameTable);
         break;
     case IP_PROTO_UDP:
-        ret = Dissect_UDP(skb, pinfo);
+        ret = Dissect_UDP(frameTable);
         break;
     default:
         printf("Bogus IP proto \n");
@@ -948,7 +948,7 @@ int IP_Try_Dissect(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
     return ret;
 }
 
-int dissect_IPv4(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
+int dissect_IPv4(frameTableTypeDef *frameTable)
 {
     /* Minimum IP header length. */
 #define IPH_MIN_LEN             20
@@ -1014,13 +1014,13 @@ int dissect_IPv4(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
 #undef IPH_MIN_LEN
 }
 
-int dissect_IPv6(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
+int dissect_IPv6(frameTableTypeDef *frameTable)
 {
     /* FIXME */
     return SECERR_OK;
 }
 
-int Dissect_IP(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
+int Dissect_IP(frameTableTypeDef *frameTable)
 {
     uint8_t version;
     int ret = SECERR_INVAL;
@@ -1040,7 +1040,7 @@ int Dissect_IP(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
     return ret;
 }
 
-int Dissect_Ethernet(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
+int Dissect_Ethernet(frameTableTypeDef *frameTable)
 {
     /* Minimum ETH header length. */
 #define ETHH_MIN_LEN             14
@@ -1067,7 +1067,7 @@ int Dissect_Ethernet(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
 #undef ETHH_MIN_LEN
 }
 
-int Dissect_Frame(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
+int Dissect_Frame(frameTableTypeDef *frameTable)
 {
     printf("  Frame: %u bytes on wire \n", skb->dataLen);
 
@@ -1078,14 +1078,14 @@ int Dissect_Frame(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
 #else
 
 __STATIC_FORCEINLINE
-int Dissect_ESP(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
+int Dissect_ESP(frameTableTypeDef *frameTable)
 {
 #if 0
     /* get esp info */
     pinfo->espBufLen     = skb->dataLen - pinfo->ethLen - pinfo->ipLen;
     pinfo->espHdrLen     = 8;
     pinfo->espIVLen      = 8;
-    pinfo->espTrailerLen = 2;
+    pinfo->-espTrailerLen = 2;
     /* The ICV consists solely of the AES-GCM Authentication Tag.
     Implementations MUST support a full-length 16-octet ICV, and MAY
     support 8 or 12 octet ICVs, and MUST NOT support other ICV lengths. */
@@ -1113,139 +1113,25 @@ int Dissect_ESP(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
 #endif
     uint64_t cycles_start, cycles_end;
     MSG_DECMsgTypeDef *dec = (MSG_DECMsgTypeDef *)(skb->opaque + MSG_HEADER);
-    NIC_RXDescTypeDef *rx_desc_seg;
-    NIC_RXDescTypeDef *rx_desc_seg_last_second;
-
     uint32_t seg_len, i;
-    /* get esp info */
-    pinfo->espBufLen     = skb->dataLen - pinfo->ethLen - pinfo->ipLen; /* consider change */
-    pinfo->espHdrLen     = 8;  /* not change */
-    pinfo->espIVLen      = 8;  /* not change */
-    pinfo->espTrailerLen = 2;  /* not change */
-    /* The ICV consists solely of the AES-GCM Authentication Tag.
-    Implementations MUST support a full-length 16-octet ICV, and MAY
-    support 8 or 12 octet ICVs, and MUST NOT support other ICV lengths. */
-    pinfo->espICVLen[3]     = 16; /* not change */
+    frameTable->frame[0].esp.espBufLen = frameTable->frame[0].origDataLen -
+                                        frameTable->frame[0].eth.ethLen - frameTable->frame[0].ip.ipLen;
+    frameTable->frame[0].esp.espHdrLen = 8;
+    frameTable->frame[0].esp.espIVLen = 8;
 
-    pinfo->espBuf        = skb->data    + pinfo->ethLen + pinfo->ipLen;/* consider change */
-    pinfo->espHdr        = pinfo->espBuf;  /* not change */
-    pinfo->espIV         = pinfo->espHdr + pinfo->espHdrLen; /* not change */
-    pinfo->espPayload[0] = pinfo->espBuf +
-                           pinfo->espHdrLen +
-                           pinfo->espIVLen;/* consider change */
 
-    if(1 == pinfo->segs) {
-        pinfo->espPayloadLen[0] = pinfo->espBufLen -
-                                  pinfo->espHdrLen -
-                                  pinfo->espIVLen -
-                                  pinfo->espICVLen[3];  /* consider change */
-        pinfo->espTrailer       = pinfo->espBuf +
-                                  pinfo->espHdrLen +
-                                  pinfo->espIVLen +
-                                  (pinfo->espPayloadLen[0] - pinfo->espTrailerLen); /* consider change */
-        pinfo->espICV[0]        = pinfo->espBuf +
-                                  pinfo->espHdrLen +
-                                  pinfo->espIVLen +
-                                  pinfo->espPayloadLen[0]; /* consider change */
-        pinfo->espICVLen[0]     = 16; /* not change */
-
-    } else if(2 == pinfo->segs) {
-        rx_desc_seg = (NIC_RXDescTypeDef *) dec->desc->desc11;
-        seg_len = GET_FIELD(rx_desc_seg->desc0, 0, 0x3fff);  /* second seg length */
-        if(seg_len < pinfo->espICVLen[3]) {                  /* pinfo->espICVLen[3] ---change to a macro*/
-            /* pinfo->espBuflen - pinfo->espHdrlen - pinfo->espIVlen---change to a variable */
-            pinfo->espPayloadLen[0] = pinfo->espBufLen -
-                                      pinfo->espHdrLen -
-                                      pinfo->espIVLen -
-                                      (pinfo->espICVLen[3] - seg_len);  /* consider change */
-            pinfo->espPayloadLen[1] = 0;
-            pinfo->espTrailer       = pinfo->espBuf +
-                                      pinfo->espHdrLen +
-                                      pinfo->espIVLen +
-                                      (pinfo->espPayloadLen[0] - pinfo->espTrailerLen); /* consider change */
-            pinfo->espICV[0]        = pinfo->espBuf +
-                                      pinfo->espHdrLen +
-                                      pinfo->espIVLen +
-                                      pinfo->espPayloadLen[0]; /* consider change */
-            pinfo->espICVLen[0]     = pinfo->espICVLen[3] - seg_len;
-
-            pinfo->espICV[1]        = rx_desc_seg->desc9;
-            pinfo->espICVLen[1]     = seg_len;
-            pinfo->espPayload[1]    = NULL;
-        } else {
-            pinfo->espPayloadLen[0] = pinfo->espBufLen -
-                                      pinfo->espHdrLen -
-                                      pinfo->espIVLen;  /* consider change */
-            pinfo->espPayloadLen[1] = seg_len - pinfo->espICVLen[3];
-            if(pinfo->espPayloadLen[1] >= pinfo->espTrailerLen) {  /* espTrailer location */
-                pinfo->espTrailer       = rx_desc_seg->desc9 +
-                                          (pinfo->espPayloadLen[1] - pinfo->espTrailerLen); /* consider change */
-            } else {
-                pinfo->espTrailer       = pinfo->espBuf +
-                                          pinfo->espHdrLen +
-                                          pinfo->espIVLen +
-                                          (pinfo->espPayloadLen[0] - pinfo->espTrailerLen); /* consider change */
-            }
-            pinfo->espICV[0]        = rx_desc_seg->desc9 + pinfo->espPayloadLen[1];
-            pinfo->espICVLen[0]     = pinfo->espICVLen[3];
-            pinfo->espPayload[1]    = rx_desc_seg->desc9;
-        }
-    } else if (2 < pinfo->segs) {
-            cycles_start = rdtsc_start();
-            rx_desc_seg = (NIC_RXDescTypeDef *) dec->desc->desc11;  /* seg[1] */
-            for (i = 0; i < (pinfo->segs - 2); i++) {
-                rx_desc_seg = (NIC_RXDescTypeDef *)rx_desc_seg->desc11;  /* from seg[2] on */
-                for (i = 0; pinfo->segs > 3, i < (pinfo->segs - 3); i++) { /* > 3 segments*/
-                    pinfo->espPayload[i+1] = rx_desc_seg->desc9;
-                    pinfo->espPayloadLen[i+1] = rx_desc_seg->desc0;
-                }
-                if(i == pinfo->segs - 1) {  /* last second  */
-                    rx_desc_seg_last_second = rx_desc_seg;
-                }
-            }
-            cycles_end = rdtsc_end();
-            printf("time consumed %lu cycles\n", cycles_end - cycles_start);
-            seg_len = GET_FIELD(rx_desc_seg->desc0, 0, 0x3fff);  /* second seg length */
-            pinfo->espPayloadLen[0] = pinfo->espBufLen -
-                                      pinfo->espHdrLen -
-                                      pinfo->espIVLen;
-            if(seg_len < pinfo->espICVLen[3]) {
-                pinfo->espPayloadLen[pinfo->segs-2] = rx_desc_seg_last_second->desc0-
-                                                      (pinfo->espICVLen[3] - seg_len);  /* consider change */
-                pinfo->espPayloadLen[pinfo->segs-1] = 0;
-                pinfo->espTrailer       = rx_desc_seg_last_second->desc9 +
-                                          (pinfo->espPayloadLen[pinfo->segs-2] - pinfo->espTrailerLen); /* consider change */
-                pinfo->espICV[0]        = rx_desc_seg_last_second->desc9  +
-                                          pinfo->espPayloadLen[pinfo->segs-2]; /* consider change */
-                pinfo->espICV[1]        = rx_desc_seg->desc9;
-                pinfo->espPayload[2]    = NULL;
-            } else {
-                pinfo->espPayloadLen[pinfo->segs-2] = rx_desc_seg_last_second->desc0;
-                pinfo->espPayloadLen[pinfo->segs-1] = seg_len - pinfo->espICVLen[3];
-                if(pinfo->espPayloadLen[pinfo->segs-1] >= pinfo->espTrailerLen) {  /* espTrailer location */
-                    pinfo->espTrailer       = rx_desc_seg->desc9 +
-                                              (pinfo->espPayloadLen[pinfo->segs-1] - pinfo->espTrailerLen); /* consider change */
-                } else {
-                    pinfo->espTrailer       = rx_desc_seg_last_second->desc9  +
-                                              (pinfo->espPayloadLen[pinfo->segs-2] - pinfo->espTrailerLen); /* consider change */
-                }
-                pinfo->espICV[0]        = rx_desc_seg->desc9 + pinfo->espPayloadLen[pinfo->segs-1];
-                pinfo->espPayload[pinfo->segs-1]    = rx_desc_seg->desc9;
-            }
-        }
-
-    pinfo->ipProto = *(pinfo->espTrailer + 1); /* get Next Header */
+    /* pinfo->ipProto = *(pinfo->espTrailer + 1); /\* get Next Header *\/ */
     return SECERR_OK;
 }
 
 __STATIC_FORCEINLINE
-int IP_Try_Dissect(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
+int IP_Try_Dissect(frameTableTypeDef *frameTable)
 {
     int ret = SECERR_INVAL;
 
-    switch (pinfo->ipProto) {
+    switch (frameTable->frame[0].ip.ipProto) {
     case IP_PROTO_ESP:
-        ret = Dissect_ESP(skb, pinfo);
+        ret = Dissect_ESP(frameTable);
         break;
     default:
         printf("Bogus IP proto \n");
@@ -1255,24 +1141,24 @@ int IP_Try_Dissect(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
     return ret;
 }
 
-int Dissect_Frame(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
+int Dissect_Frame(frameTableTypeDef *frameTable)
 {
     int ret = SECERR_INVAL;
 
-    pinfo->ethLen = 14; /* Minimum ETH header length. */
+    frameTable->frame[0].ethLen = 14; /* Minimum ETH header length. */
 
     /* IP version(v4 or v6) */
-    switch (*(skb->data + pinfo->ethLen) >> 4) {
+    switch (*(frameTable->frame[0].origData  + frameTable->frame[0].eth.ethLen) >> 4) {
     case 4:
-        pinfo->addressType = AT_IPv4;
-        pinfo->ipLen       = 20; /* Minimum IP header length. */
-        pinfo->dst[0]      = ntoh32(skb->data + pinfo->ethLen + IPH_DST);
-        pinfo->ipProto     = *(skb->data + pinfo->ethLen + IPH_P);
-        ret = IP_Try_Dissect(skb, pinfo);
+        frameTable->frame[0].eth.addressType = AT_IPv4;
+        frameTable->frame[0].ip.ipLen       = 20; /* Minimum IP header length. */
+        frameTable->frame[0].eth.dst[0]      = ntoh32(frameTable->frame[0].origData + frameTable->frame[0].eth.ethLen + IPH_DST);
+        frameTable->frame[0].ip.ipProto     = *(frameTable->frame[0].origData + frameTable->frame[0].eth.ethLen + IPH_P);
+        ret = IP_Try_Dissect(frameTable);
         break;
     case 6:
         /* FIXME */
-        pinfo->addressType = AT_IPv6;
+        frameTable->frame[0].eth.addressType = AT_IPv6;
         break;
     default:
         printf("Bogus IP version \n");

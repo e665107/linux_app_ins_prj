@@ -2,6 +2,21 @@ if (${HELLO_WORLD_APP})
 add_subdirectory(hello_world)
 endif (${HELLO_WORLD_APP})
 
+if (${HAPPY_HACK1_APP})
+add_subdirectory(happy_hack1)
+endif (${HAPPY_HACK1_APP})
+
+
+if (${HAPPY_HACK_APP})
+add_subdirectory(happy_hack)
+endif (${HAPPY_HACK_APP})
+
+
+if (${QT_TST1_APP})
+add_subdirectory(qt_tst1)
+endif (${QT_TST1_APP})
+
+
 if (${TEST1_APP})
 add_subdirectory(test1)
 endif (${TEST1_APP})

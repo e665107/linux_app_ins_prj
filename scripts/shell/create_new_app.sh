@@ -18,7 +18,6 @@ endif (${'"$param"'_APP})\
 ' CMakeLists.txt
    sed -i '/endif\ (${HELLO_WORLD_APP})/G' CMakeLists.txt
    mkdir -p $2
-   cp ./test_app/CMakeLists.txt  ./$2
    cp ./test_app/test_thread.c   ./$2
    cp ./test_app/test_thread.h   ./$2
    mv ./$2/test_thread.c ./$2/$2_thread.c
@@ -29,7 +28,16 @@ endif (${'"$param"'_APP})\
    sed -i 's/Thread\ is/Thread_'"$2"' is/' ./$2/$2_thread.c
    if [[ $2 =~ "qt" ]]
    then
-
+        cp ./qt_helloworld/CMakeLists.txt  ./$2
+        cp ./qt_helloworld/mainwindow.cpp  ./$2
+        cp ./qt_helloworld/mainwindow.h    ./$2
+        cp ./qt_helloworld/mainwindow.ui   ./$2
+        cp ./qt_helloworld/qt_hello.cpp    ./$2
+        cp ./qt_helloworld/qt_hello.hpp    ./$2
+        cp -r ./qt_helloworld/resources    ./$2
+        cp  ./qt_helloworld/resources.qrc  ./$2
+   else
+        cp ./test_app/CMakeLists.txt  ./$2
    fi
    # add app sources
    cd ../bsp

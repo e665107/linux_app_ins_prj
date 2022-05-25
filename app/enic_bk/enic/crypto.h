@@ -1,4 +1,4 @@
-
+-
 #ifndef _CRYPTO_H
 #define _CRYPTO_H
 
@@ -33,4 +33,3 @@ void CY_SymPerformOp(const CY_SymCbFunc symCb, intptr_t callbackTag,
                      BufferListTypedef *dstBuffer);
 
 #endif /* _CRYPTO_H */
-

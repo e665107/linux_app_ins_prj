@@ -1,4 +1,4 @@
-
+-
 #include "fifo.h"
 #include "crypto.h"
 #include "hsm_transport.h"
@@ -505,4 +505,3 @@ void CY_Initialize(void)
 #endif
     return;
 }
-

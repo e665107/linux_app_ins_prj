@@ -27,7 +27,7 @@ void *thread(void *arg)
         {
                 printf("Thread is running\n");
                 sleep(2);
-   
+
         }
         exit(EXIT_SUCCESS);
 }
@@ -36,17 +36,17 @@ int create_qt_hello_threads(void)
 {
         pthread_t th_id;
         pthread_t th_id0;
-    
+
         int status;
-    
+
         printf("main thread ,ID is %ld\n", pthread_self());
-     
+
         if (pthread_create(&th_id, NULL, (void *)thread, NULL) != 0)
         {
                 printf("thread creation failed\n");
                 exit(EXIT_FAILURE);
         }
-    
+
         if (pthread_create(&th_id0, NULL, (void *)thread_0, NULL) != 0)
         {
                 printf("thread_0 creation failed\n");
@@ -61,6 +61,3 @@ int create_qt_hello_threads(void)
         pthread_join(th_id0, NULL);
         exit(EXIT_SUCCESS);
 }
-
-
-

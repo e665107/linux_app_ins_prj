@@ -1,4 +1,4 @@
-
+-
 #include <stdint.h>
 #include <string.h>
 
@@ -353,7 +353,7 @@ RX_SATypedef *Find_RX_SA(uint32_t *daddr, uint32_t spi, int ip4)
 }
 
 __STATIC_FORCEINLINE
-uint16_t TCP_Cksum(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
+uint16_t TCP_Cksum(frameTableTypeDef *frameTable )
 {
     VecTypeDef cksumVec[4];
     uint32_t phdr[2];
@@ -393,7 +393,7 @@ drop:
 }
 
 __STATIC_FORCEINLINE
-uint16_t UDP_Cksum(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
+uint16_t UDP_Cksum(frameTableTypeDef *frameTable)
 {
     /* FIXME */
     return 0;
@@ -484,7 +484,7 @@ void IPSec_CallbackFn(intptr_t callbackTag,
  *       For ESP encryption and authentication: AES-128-GCM (128-bit key)
  */
 __STATIC_FORCEINLINE
-void ESP_TRANSPORT(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo, void *sa)
+void ESP_TRANSPORT(frameTableTypeDef *frameTable, void *sa)
 {
     const uint32_t *key;
     const uint32_t *salt;
@@ -518,18 +518,20 @@ void ESP_TRANSPORT(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo, void *sa)
     }
 
     /* buffer list */
-#if 0    
+#if 0
     bufList.numBuffers = 1;
     bufList.buffers[0].data    = pinfo->espPayload;
     bufList.buffers[0].dataLen = pinfo->espPayloadLen;
 #endif
     bufList.numBuffers = pinfo->segs;  /* consider change */
-    sg_copy_buffer(sgl, nents, bufList.buffers);
+
+    sg_copy_buffer(frameTable, &bufList);
+#if 0
     for (i = 0; i < bufList.numBuffers; i++) {
             bufList.buffers[i].data    = pinfo->espPayload[i];
             bufList.buffers[i].dataLen = pinfo->espPayloadLen[i];
     }
-
+#endif
     /* aad */
     opData.aad       = pinfo->espHdr;/* not change */
     opData.aadLen    = pinfo->espHdrLen;/* not change */
@@ -538,7 +540,7 @@ void ESP_TRANSPORT(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo, void *sa)
     opData.digestLen[0] = pinfo->espICVLen[0];
     opData.digest[1]    = pinfo->espICV[1];
     opData.digestLen[1] = pinfo->espICVLen[1];
-    
+
     /* key */
     opData.key       = (uint8_t *)key;
     opData.keyLen    = 16;
@@ -667,27 +669,26 @@ drop:
 }
 #endif
 
+
 __STATIC_FORCEINLINE
 void IPSec_Decryption(intptr_t msg)
 {
     int ret;
-    skbufTypeDef skb;
-    Packet_InfoTypeDef pinfo;
+    frameTableTypeDef frameTable;
 
     MSG_DECMsgTypeDef *dec = (MSG_DECMsgTypeDef *)(msg + MSG_HEADER);
 
-    skb.data        = (uint8_t *)(intptr_t)dec->desc->desc9;
-    skb.dataLen     = GET_FIELD(dec->desc->desc0, 0, 0x3fff);
-    skb.opaque      = msg;
-    pinfo.direction = INBOUND;
-    pinfo.segs      = dec->segs;
+    frameTable.frame[0].origData        = (uint8_t *)(intptr_t)dec->desc->desc9;
+    frameTable.frame[0].origDataLen     = GET_FIELD(dec->desc->desc0, 0, 0x3fff);
+    frameTable.direction = INBOUND;
+    frameTable.origNents = dec->segs;
 
-    ret = Dissect_Frame(&skb, &pinfo);
+    ret = Dissect_Frame(&frameTable);
     /* if ((!!ret)) */
     /*     goto drop; */
 
     /* Main Features */
-    ESP_TRANSPORT(&skb, &pinfo,
+    ESP_TRANSPORT(&frameTable,
                   Find_RX_SA(pinfo.dst,
                              ntoh32(pinfo.espHdr),
                              pinfo.addressType == AT_IPv4 ? 1 : 0)

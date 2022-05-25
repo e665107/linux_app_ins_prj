@@ -1,4 +1,4 @@
-
+-
 #ifndef _CRYPTO_H
 #define _CRYPTO_H
 
@@ -23,7 +23,7 @@ typedef struct
     uint32_t aadLen;
     bool verifyDigest;
     uint8_t *digest;
-    uint32_t digestLen[2];
+    uint32_t digestLen;
 } CY_Sym_OpDataTypedef;
 
 void CY_Initialize(void);
@@ -33,4 +33,3 @@ void CY_SymPerformOp(const CY_SymCbFunc symCb, intptr_t callbackTag,
                      BufferListTypedef *dstBuffer);
 
 #endif /* _CRYPTO_H */
-

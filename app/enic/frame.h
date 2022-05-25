@@ -1,4 +1,4 @@
-
+-
 #ifndef _FRAME_H
 #define _FRAME_H
 
@@ -30,7 +30,8 @@ enum
 typedef struct {
     uint32_t dst[4];
     uint32_t src[4];
-    uint16_t type;
+    uint16_t addressType;
+    uint32_t ethLen;
 } EthTypeDef;
 
 typedef struct {
@@ -71,6 +72,7 @@ typedef struct {
 
 typedef struct {
     frameTypeDef frame[6];      /* the list */
+    unsigned int direction;
     unsigned int nents;         /* number of mapped entries */
     unsigned int origNents;     /* original size of list */
 } frameTableTypeDef;
@@ -82,16 +84,4 @@ typedef struct
 } espHdrPacket;
 
 
-typedef struct {
-    uint8_t *data;
-    uint32_t dataLen;
-#ifdef DEBUG
-    uint8_t *realData;
-    uint32_t realDataLen;
-#endif
-    intptr_t opaque;
-} skbufTypeDef;
-
 #endif /* _FRAME_H */
-
-

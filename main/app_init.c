@@ -26,9 +26,21 @@
 #ifdef HELLO_WORLD_APP
 #include "hello_world_thread.h"
 #endif //HELLO_WORLD_APP
-#ifdef TEST1_APP
-#include "test1_thread.h"
-#endif //TEST1_APP
+#ifdef HAPPY_HACK1_APP
+#include "happy_hack1_thread.h"
+#endif //HAPPY_HACK1_APP
+#ifdef HAPPY_HACK_APP
+#include "happy_hack_thread.h"
+#endif //HAPPY_HACK_APP
+#ifdef QT_TST1_APP
+#include "qt_tst1_thread.h"
+#endif //QT_TST1_APP
+#ifdef TEST9_APP
+#include "test9_thread.h"
+#endif //TEST9_APP
+#ifdef TEST7_APP
+#include "test7_thread.h"
+#endif //TEST7_APP
 #ifdef STRUCTURE_APP
 #include "structures_thread.h"
 #endif //
@@ -63,9 +75,21 @@ void app_init(void)
 #ifdef HELLO_WORLD_APP
     create_thread();
 #endif // HELLO_WORLD_APP
-#ifdef TEST1_APP
-    create_test1_threads();
-#endif //TEST1_APP
+#ifdef HAPPY_HACK1_APP
+    create_happy_hack1_threads();
+#endif //HAPPY_HACK1_APP
+#ifdef HAPPY_HACK_APP
+    create_happy_hack_threads();
+#endif //HAPPY_HACK_APP
+#ifdef QT_TST1_APP
+    create_qt_tst1_threads();
+#endif //QT_TST1_APP
+#ifdef TEST9_APP
+    create_test9_threads();
+#endif //TEST9_APP
+#ifdef TEST7_APP
+    create_test7_threads();
+#endif //TEST7_APP
 #ifdef STRUCTURE_APP
     create_structure_threads();
 #endif // MACRO

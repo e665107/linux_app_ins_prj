@@ -1,4 +1,4 @@
-
+-
 #include "fifo.h"
 #include "crypto.h"
 #include "hsm_transport.h"
@@ -290,11 +290,9 @@ void CY_Desc_CookieParamsPopulate(CY_SymCookieTypedef *cookie,
 
     cookie->symCb            = symCb;
     cookie->callbackTag      = callbackTag;
-    cookie->opData.digest[0]    = opData->digest[0];
-    cookie->opData.digest[1]    = opData->digest[1];
+    cookie->opData.digest    = opData->digest;
 
-    cookie->opData.digestLen[0] = opData->digestLen[0];
-    cookie->opData.digestLen[1] = opData->digestLen[1];
+    cookie->opData.digestLen = opData->digestLen;
 
     /* symmetric key */
     memcpy(cookie->reserved, opData->key, opData->keyLen);
@@ -505,4 +503,6 @@ void CY_Initialize(void)
 #endif
     return;
 }
+
+
 
