@@ -166,10 +166,12 @@ void Dump_MSG(intptr_t msg)
                 skb.data    = (uint8_t *)(intptr_t)dec->desc->desc9;
                 skb.dataLen = GET_FIELD(dec->desc->desc0, 0, 0x3fff);
                 pinfo.direction = INBOUND;
+                pinfo.segs      = dec->segs;
+
 
                 printf("xfrm decryption (%p) \n", (void *)dec->desc->desc9);
                 DUMPL("SKB", skb.data, skb.dataLen);
-                /* Dissect_Frame(&skb, &pinfo); */
+                Dissect_Frame(&skb, &pinfo);
             }
             break;
         case MSG_RX_SA_ADD_DONE:
@@ -367,7 +369,7 @@ uint16_t TCP_Cksum(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
     switch (pinfo->addressType)
     {
         case AT_IPv4:
-            phdr[0] = htonl((IP_PROTO_TCP << 16) + (pinfo->espPayloadLen - pinfo->espTrailerLen - *(pinfo->espTrailer)));
+            phdr[0] = htonl((IP_PROTO_TCP << 16) + (pinfo->espPayloadLen[0] - pinfo->espTrailerLen - *(pinfo->espTrailer)));
 
             SET_CKSUM_VEC_PTR(cksumVec[2], (const uint8_t *)phdr, 4);
             break;
@@ -377,9 +379,9 @@ uint16_t TCP_Cksum(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo)
             /* runs only atop IPv4 and IPv6.... */
             goto drop;
     }
-    SET_CKSUM_VEC_PTR(cksumVec[3], pinfo->espPayload, pinfo->espPayloadLen - pinfo->espTrailerLen - *(pinfo->espTrailer));
+    SET_CKSUM_VEC_PTR(cksumVec[3], pinfo->espPayload, pinfo->espPayloadLen[0] - pinfo->espTrailerLen - *(pinfo->espTrailer));
     printf("Padding Len:%u\n, espTrailerLen Len:%u\n, espPayload Len:%u\n",
-           *(pinfo->espTrailer), pinfo->espTrailerLen, pinfo->espPayloadLen);
+           *(pinfo->espTrailer), pinfo->espTrailerLen, pinfo->espPayloadLen[0]);
     computedCksum = inCksum(cksumVec, 4);
 #ifdef DEBUG
     printf("TCP checksum: 0x%04x \n", htons(computedCksum));
@@ -486,6 +488,7 @@ void ESP_TRANSPORT(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo, void *sa)
 {
     const uint32_t *key;
     const uint32_t *salt;
+    uint32_t i;
     BufferListTypedef bufList;
     CY_Sym_OpDataTypedef opData;
     espHdrPacket *espHdr = NULL;
@@ -515,16 +518,27 @@ void ESP_TRANSPORT(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo, void *sa)
     }
 
     /* buffer list */
+#if 0    
     bufList.numBuffers = 1;
     bufList.buffers[0].data    = pinfo->espPayload;
     bufList.buffers[0].dataLen = pinfo->espPayloadLen;
+#endif
+    bufList.numBuffers = pinfo->segs;  /* consider change */
+    sg_copy_buffer(sgl, nents, bufList.buffers);
+    for (i = 0; i < bufList.numBuffers; i++) {
+            bufList.buffers[i].data    = pinfo->espPayload[i];
+            bufList.buffers[i].dataLen = pinfo->espPayloadLen[i];
+    }
 
     /* aad */
-    opData.aad       = pinfo->espHdr;
-    opData.aadLen    = pinfo->espHdrLen;
+    opData.aad       = pinfo->espHdr;/* not change */
+    opData.aadLen    = pinfo->espHdrLen;/* not change */
     /* digest */
-    opData.digest    = pinfo->espICV;
-    opData.digestLen = pinfo->espICVLen;
+    opData.digest[0]    = pinfo->espICV[0];
+    opData.digestLen[0] = pinfo->espICVLen[0];
+    opData.digest[1]    = pinfo->espICV[1];
+    opData.digestLen[1] = pinfo->espICVLen[1];
+    
     /* key */
     opData.key       = (uint8_t *)key;
     opData.keyLen    = 16;
@@ -568,26 +582,26 @@ void IPSec_Encryption(intptr_t msg)
             pinfo.espHdrLen     = 8;
             pinfo.espIVLen      = 8;
             pinfo.espTrailerLen = 2;
-            pinfo.espICVLen     = GET_FIELD(enc->desc->desc8, 11, 0x1ff) -
+            pinfo.espICVLen[0]     = GET_FIELD(enc->desc->desc8, 11, 0x1ff) -
                                   pinfo.espTrailerLen;
-            pinfo.espPayloadLen = pinfo.espBufLen -
-                                  pinfo.espHdrLen -
-                                  pinfo.espIVLen -
-                                  pinfo.espICVLen;
+            pinfo.espPayloadLen[0] = pinfo.espBufLen -
+                                     pinfo.espHdrLen -
+                                     pinfo.espIVLen -
+                                     pinfo.espICVLen[0];
             pinfo.espBuf        = skb.data + pinfo.ethLen + pinfo.ipLen;
             pinfo.espHdr        = pinfo.espBuf;
             pinfo.espIV         = pinfo.espHdr + pinfo.espHdrLen;
-            pinfo.espPayload    = pinfo.espBuf +
+            pinfo.espPayload[0]    = pinfo.espBuf +
                                   pinfo.espHdrLen +
                                   pinfo.espIVLen;
             pinfo.espTrailer    = pinfo.espBuf +
                                   pinfo.espHdrLen +
                                   pinfo.espIVLen +
-                                  (pinfo.espPayloadLen - pinfo.espTrailerLen);
-            pinfo.espICV        = pinfo.espBuf +
+                                  (pinfo.espPayloadLen[0] - pinfo.espTrailerLen);
+            pinfo.espICV[0]        = pinfo.espBuf +
                                   pinfo.espHdrLen +
                                   pinfo.espIVLen +
-                                  pinfo.espPayloadLen;
+                                  pinfo.espPayloadLen[0];
 
             /* Cross Features: We haven't turned checksum checking off; checksum it. */
             switch (*(pinfo.espTrailer + 1))
@@ -666,6 +680,7 @@ void IPSec_Decryption(intptr_t msg)
     skb.dataLen     = GET_FIELD(dec->desc->desc0, 0, 0x3fff);
     skb.opaque      = msg;
     pinfo.direction = INBOUND;
+    pinfo.segs      = dec->segs;
 
     ret = Dissect_Frame(&skb, &pinfo);
     /* if ((!!ret)) */
@@ -737,8 +752,8 @@ void Rx_SA_Find(uint32_t *daddr, uint32_t spi, int ip4)
 
     printf("Rx_SA_Find:found matching\n");
 
-    Dump_MSG_UINT(buf, ARRAY_SIZE(rsa->key) * 8 + 2 + 1,
-                  rsa->key, ARRAY_SIZE(rsa->key));
+    /* Dump_MSG_UINT(buf, ARRAY_SIZE(rsa->key) * 8 + 2 + 1, */
+    /*               rsa->key, ARRAY_SIZE(rsa->key)); */
     printf("xfrm state ip table index %u spi 0x%08x salt 0x%08x \n",
            rsa->iptbl_ind, rsa->spi, rsa->salt);
 

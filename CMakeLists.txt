@@ -23,7 +23,7 @@ endif(WIN32)
 # set(CMAKE_BUILD_TYPE "Release")
 project(test)
 
-# applications 
+
 include(${PROJECT_SOURCE_DIR}/cmake/app.cmake)
 
 # 复用插件

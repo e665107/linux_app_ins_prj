@@ -6,16 +6,13 @@ if (${UART_COMMUNICATION_APP})
 add_subdirectory(uart_communication)
 endif (${UART_COMMUNICATION_APP})
 
-
 if (${STRUCTURE_APP})
 add_subdirectory(structures_and_algorithms)
 endif (${STRUCTURE_APP})
 
-
 if (${NET_COMMUNICATION_APP})
 add_subdirectory(net_communication)
 endif (${NET_COMMUNICATION_APP})
-
 
 if (${HTTPD_APP})
 add_subdirectory(httpd)
@@ -33,8 +30,18 @@ if (${CHAT_SERVER_APP})
 add_subdirectory(chat_server)
 endif (${CHAT_SERVER_APP})
 
+if (${MYSQL_ACCESS_APP})
+add_subdirectory(mysql_app)
+endif (${MYSQL_ACCESS_APP})
+
 #qt relate apps
 if (${QT_HELLO_WORLD_APP})
 add_subdirectory(qt_helloworld)
 endif (${QT_HELLO_WORLD_APP})
+
+
+
+
+
+
 

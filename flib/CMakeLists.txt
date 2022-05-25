@@ -4,7 +4,6 @@ if (${HELLO_WORLD_APP})
 )
 endif (${HELLO_WORLD_APP})
 
-
 if (${ENIC_APP})
   set(SRCS
     src/delay.c
@@ -16,6 +15,12 @@ if (${CHAT_SERVER_APP})
     src/delay.c
 )
 endif (${CHAT_SERVER_APP})
+
+if (${MYSQL_ACCESS_APP})
+  set(SRCS
+    src/delay.c
+)
+endif (${MYSQL_ACCESS_APP})
 
 if (${QT_HELLO_WORLD_APP})
   set(SRCS

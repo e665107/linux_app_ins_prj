@@ -4,7 +4,8 @@
 /* #undef NET_COMMUNICATION_APP */
 /* #undef HTTP_CLIENT_APP */
 /* #undef HTTPD_APP */
-/* #undef ENIC_APP */
+#define  ENIC_APP
 /* #undef CHAT_SERVER_APP */
-#define  QT_HELLO_WORLD_APP
+/* #undef QT_HELLO_WORLD_APP */
+/* #undef MYSQL_ACCESS_APP */
 

@@ -25,7 +25,7 @@
 #endif //
 #ifdef HELLO_WORLD_APP
 #include "hello_world_thread.h"
-#endif //
+#endif //HELLO_WORLD_APP
 #ifdef STRUCTURE_APP
 #include "structures_thread.h"
 #endif //
@@ -50,13 +50,16 @@
 #ifdef QT_HELLO_WORLD_APP
 #include "qt_hello_thread.h"
 #endif // MACRO
+#ifdef MYSQL_ACCESS_APP
+#include "mysql_access_thread.h"
+#endif // MACRO
 
 
 void app_init(void)
 {
 #ifdef HELLO_WORLD_APP
     create_thread();
-#endif // MACRO
+#endif // HELLO_WORLD_APP
 #ifdef STRUCTURE_APP
     create_structure_threads();
 #endif // MACRO
@@ -78,7 +81,8 @@ void app_init(void)
 #ifdef QT_HELLO_WORLD_APP
      create_qt_hello_threads();
 #endif // MACRO
+#ifdef MYSQL_ACCESS_APP
+     create_mysql_access_threads();
+#endif // MACRO
 
 }
-
-

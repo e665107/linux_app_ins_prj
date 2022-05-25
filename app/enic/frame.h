@@ -27,14 +27,26 @@ enum
 #define IPH_SRC             12
 #define IPH_DST             16
 
-typedef struct
-{
-    uint32_t direction;
-    uint32_t addressType;
-    uint32_t ethLen;
-    uint32_t ipProto;
-    uint32_t ipLen;
+typedef struct {
     uint32_t dst[4];
+    uint32_t src[4];
+    uint16_t type;
+} EthTypeDef;
+
+typedef struct {
+    uint8_t  ipVer;     /* 4 */
+    uint8_t  ipTos;     /* type of service */
+    uint32_t ipLen;     /* total length */
+    uint16_t ipID;      /* identification */
+    uint16_t ipOff;     /* fragment offset */
+    uint8_t  ipTTL;     /* time-to-live */
+    uint8_t  ipProto;   /* protocol */
+    uint16_t ipSum;     /* checksum */
+    uint32_t ipSrc[4];  /* source address */
+    uint32_t ipDst[4];  /* destination address */
+} IPTypeDef;
+
+typedef struct {
     uint8_t *espBuf;
     uint32_t espBufLen;
     uint8_t *espHdr;
@@ -47,12 +59,26 @@ typedef struct
     uint32_t espTrailerLen;
     uint8_t *espICV;
     uint32_t espICVLen;
-} Packet_InfoTypeDef;
+} ESPTypeDef;
+
+typedef struct {
+    EthTypeDef eth;
+    IPTypeDef  ip;
+    ESPTypeDef esp;
+    uint8_t *origData;
+    uint32_t origDataLen;
+} frameTypeDef;
+
+typedef struct {
+    frameTypeDef frame[6];      /* the list */
+    unsigned int nents;         /* number of mapped entries */
+    unsigned int origNents;     /* original size of list */
+} frameTableTypeDef;
 
 typedef struct
 {
-    uint32_t 	spi;			/**< Security Parameters Index      */
-    uint32_t	sequence_number;/**< Sequence number                */
+    uint32_t 	spi;			/**< Security Parameters Index */
+    uint32_t	sequence_number;        /**< Sequence number */
 } espHdrPacket;
 
 
@@ -67,3 +93,5 @@ typedef struct {
 } skbufTypeDef;
 
 #endif /* _FRAME_H */
+
+

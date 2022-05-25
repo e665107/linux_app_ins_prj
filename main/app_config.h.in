@@ -7,4 +7,4 @@
 #cmakedefine  ENIC_APP
 #cmakedefine  CHAT_SERVER_APP
 #cmakedefine  QT_HELLO_WORLD_APP
-
+#cmakedefine  MYSQL_ACCESS_APP

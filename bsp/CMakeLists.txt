@@ -28,6 +28,11 @@ set(SRCS
 )
 endif (${CHAT_SERVER_APP})
 
+if (${MYSQL_ACCESS_APP})
+set(SRCS
+    src/bsp_ttyusb0.c
+)
+endif (${MYSQL_ACCESS_APP})
 
 
 if (${HTTPD_APP})

@@ -48,10 +48,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/e66/gitee_prjs/linux_app_ins_prj
+CMAKE_SOURCE_DIR = /home/e66/gitee/linux_app_ins_prj
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/e66/gitee_prjs/linux_app_ins_prj/build
+CMAKE_BINARY_DIR = /home/e66/gitee/linux_app_ins_prj/build
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -69,8 +69,8 @@ rebuild_cache/fast: rebuild_cache
 
 # Special rule for the target edit_cache
 edit_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake cache editor..."
-	/usr/bin/ccmake -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "No interactive CMake dialog available..."
+	/usr/bin/cmake -E echo No\ interactive\ CMake\ dialog\ available.
 .PHONY : edit_cache
 
 # Special rule for the target edit_cache
@@ -80,9 +80,9 @@ edit_cache/fast: edit_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/e66/gitee_prjs/linux_app_ins_prj/build/CMakeFiles /home/e66/gitee_prjs/linux_app_ins_prj/build/CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/e66/gitee/linux_app_ins_prj/build/CMakeFiles /home/e66/gitee/linux_app_ins_prj/build/CMakeFiles/progress.marks
 	$(MAKE) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/e66/gitee_prjs/linux_app_ins_prj/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/e66/gitee/linux_app_ins_prj/build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -120,21 +120,8 @@ app_static: cmake_check_build_system
 
 # fast build rule for target.
 app_static/fast:
-	$(MAKE) -f app/qt_helloworld/CMakeFiles/app_static.dir/build.make app/qt_helloworld/CMakeFiles/app_static.dir/build
+	$(MAKE) -f app/enic/CMakeFiles/app_static.dir/build.make app/enic/CMakeFiles/app_static.dir/build
 .PHONY : app_static/fast
-
-#=============================================================================
-# Target rules for targets named app_static_autogen
-
-# Build rule for target.
-app_static_autogen: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 app_static_autogen
-.PHONY : app_static_autogen
-
-# fast build rule for target.
-app_static_autogen/fast:
-	$(MAKE) -f app/qt_helloworld/CMakeFiles/app_static_autogen.dir/build.make app/qt_helloworld/CMakeFiles/app_static_autogen.dir/build
-.PHONY : app_static_autogen/fast
 
 #=============================================================================
 # Target rules for targets named bsp_static
@@ -150,19 +137,6 @@ bsp_static/fast:
 .PHONY : bsp_static/fast
 
 #=============================================================================
-# Target rules for targets named bsp_static_autogen
-
-# Build rule for target.
-bsp_static_autogen: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 bsp_static_autogen
-.PHONY : bsp_static_autogen
-
-# fast build rule for target.
-bsp_static_autogen/fast:
-	$(MAKE) -f bsp/CMakeFiles/bsp_static_autogen.dir/build.make bsp/CMakeFiles/bsp_static_autogen.dir/build
-.PHONY : bsp_static_autogen/fast
-
-#=============================================================================
 # Target rules for targets named flib_static
 
 # Build rule for target.
@@ -174,19 +148,6 @@ flib_static: cmake_check_build_system
 flib_static/fast:
 	$(MAKE) -f flib/CMakeFiles/flib_static.dir/build.make flib/CMakeFiles/flib_static.dir/build
 .PHONY : flib_static/fast
-
-#=============================================================================
-# Target rules for targets named flib_static_autogen
-
-# Build rule for target.
-flib_static_autogen: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 flib_static_autogen
-.PHONY : flib_static_autogen
-
-# fast build rule for target.
-flib_static_autogen/fast:
-	$(MAKE) -f flib/CMakeFiles/flib_static_autogen.dir/build.make flib/CMakeFiles/flib_static_autogen.dir/build
-.PHONY : flib_static_autogen/fast
 
 #=============================================================================
 # Target rules for targets named test_app
@@ -201,19 +162,6 @@ test_app/fast:
 	$(MAKE) -f main/CMakeFiles/test_app.dir/build.make main/CMakeFiles/test_app.dir/build
 .PHONY : test_app/fast
 
-#=============================================================================
-# Target rules for targets named test_app_autogen
-
-# Build rule for target.
-test_app_autogen: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 test_app_autogen
-.PHONY : test_app_autogen
-
-# fast build rule for target.
-test_app_autogen/fast:
-	$(MAKE) -f main/CMakeFiles/test_app_autogen.dir/build.make main/CMakeFiles/test_app_autogen.dir/build
-.PHONY : test_app_autogen/fast
-
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -223,13 +171,9 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
 	@echo "... app_static"
-	@echo "... app_static_autogen"
 	@echo "... bsp_static"
-	@echo "... bsp_static_autogen"
 	@echo "... flib_static"
-	@echo "... flib_static_autogen"
 	@echo "... test_app"
-	@echo "... test_app_autogen"
 .PHONY : help
 
 
