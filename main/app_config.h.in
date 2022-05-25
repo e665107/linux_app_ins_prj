@@ -1,7 +1,4 @@
 #cmakedefine  HELLO_WORLD_APP
-#cmakedefine  TEST9_APP
-#cmakedefine  TEST8_APP
-#cmakedefine  TEST7_APP
 #cmakedefine  STRUCTURE_APP
 #cmakedefine  UART_COMMUNICATION_APP
 #cmakedefine  NET_COMMUNICATION_APP

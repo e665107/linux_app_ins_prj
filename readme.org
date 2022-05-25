@@ -1,3 +1,4 @@
+#+OPTIONS: ^:nil
 * project
 ** 介绍
 本项目主要用于linux-c开发,包括测试和实际开发,要做到类似freertos架构式的开发，以app为中心
