@@ -8,7 +8,7 @@
  2. 采用cmake进行文件的组织，宏定义来进行裁剪。 
  3. 本项目将不断进行更新，改造，长期维护
  4. 借鉴zephyr，成熟工程cmake的组织形式 
- 5. 初期，采用linux c进行应用的开发，中期添加c++，Python新的语言 
+ 5. 初期，采用linux c进行应用的开发，中期添加c++，python, go, shell新的语言 
  6. 项目暂时不采用license，做好后使用GPLlicense。
 
 ** 使用
@@ -25,7 +25,7 @@
 6. 在bsp中编写相应的设备底层初始化文件
     eg: bsp_ttyusb0.c bsp_ttyusb0.h
 7. 在flib的CMakeLists.txt中做类似2的改变
-8. 在main的CMakeLists.txt中添加相应app要连接的静态库
+8. CMakeLists.txt中添加相应app要连接的静态库
 9. add the app name to the app_config.in.h
 *** auto creat app
 1. ./auto.sh clean
