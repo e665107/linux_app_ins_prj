@@ -8,4 +8,3 @@
 /* #undef CHAT_SERVER_APP */
 /* #undef QT_HELLO_WORLD_APP */
 /* #undef MYSQL_ACCESS_APP */
-
