@@ -1,21 +1,21 @@
 
 # Table of Contents
 
-1.  [project](#org8539ac2)
-    1.  [介绍](#org12ff081)
-        1.  [特征：](#org13d21a7)
-    2.  [使用](#org419f424)
-        1.  [添加一个linux c/c++ app](#org3d01ef8)
-        2.  [auto creat app](#org0934f78)
+1.  [project](#orgec8ea1b)
+    1.  [介绍](#orgaff7dc6)
+        1.  [特征：](#org70713bc)
+    2.  [使用](#orgc698d53)
+        1.  [手动添加一个linux c/c++ app](#org4452d3c)
+        2.  [自动添加一个linux c/c++ app](#orgc658167)
 
 
 
-<a id="org8539ac2"></a>
+<a id="orgec8ea1b"></a>
 
 # project
 
 
-<a id="org12ff081"></a>
+<a id="orgaff7dc6"></a>
 
 ## 介绍
 
@@ -23,7 +23,7 @@
 以后方便两者之间的相互移植，转换，，适用于Linux下的应用开发。
 
 
-<a id="org13d21a7"></a>
+<a id="org70713bc"></a>
 
 ### 特征：
 
@@ -31,18 +31,18 @@
 2.  采用cmake进行文件的组织，宏定义来进行裁剪。
 3.  本项目将不断进行更新，改造，长期维护
 4.  借鉴zephyr，成熟工程cmake的组织形式
-5.  初期，采用linux c进行应用的开发，中期添加c++，Python新的语言
+5.  初期，采用linux c进行应用的开发，中期添加c++，python, go, shell新的语言
 6.  项目暂时不采用license，做好后使用GPLlicense。
 
 
-<a id="org419f424"></a>
+<a id="orgc698d53"></a>
 
 ## 使用
 
 
-<a id="org3d01ef8"></a>
+<a id="org4452d3c"></a>
 
-### 添加一个linux c/c++ app
+### 手动添加一个linux c/c++ app
 
 1.  在根目录CMakeLists.txt中添加一个app
     eg: set(HELLO\_WORLD\_APP 1)
@@ -56,13 +56,13 @@
 6.  在bsp中编写相应的设备底层初始化文件
     eg: bsp\_ttyusb0.c bsp\_ttyusb0.h
 7.  在flib的CMakeLists.txt中做类似2的改变
-8.  在main的CMakeLists.txt中添加相应app要连接的静态库
+8.  在对应的目录中的CMakeLists.txt中添加相应app要连接的静态库/动态库
 9.  add the app name to the app\_config.in.h
 
 
-<a id="org0934f78"></a>
+<a id="orgc658167"></a>
 
-### auto creat app
+### 自动添加一个linux c/c++ app
 
 1.  ./auto.sh clean
 2.  ./auto.sh app app\_name(eg.  test0)
