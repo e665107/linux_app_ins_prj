@@ -4,6 +4,10 @@ if (${HELLO_WORLD_APP})
 )
 endif (${HELLO_WORLD_APP})
 
+if (${TEST1_APP})
+set(SRCS src/bsp_ttyusb0.c)
+endif (${TEST1_APP})
+
 
 if (${UART_COMMUNICATION_APP})
 set(SRCS

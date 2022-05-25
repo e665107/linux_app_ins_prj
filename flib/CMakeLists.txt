@@ -4,6 +4,10 @@ if (${HELLO_WORLD_APP})
 )
 endif (${HELLO_WORLD_APP})
 
+if (${TEST1_APP})
+set(SRCS src/delay.c)
+endif (${TEST1_APP})
+
 
 if (${ENIC_APP})
   set(SRCS

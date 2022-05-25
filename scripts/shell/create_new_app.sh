@@ -1,7 +1,16 @@
 #!/bin/bash
    param=${2^^}
    sed -i 's/APP\ 1/APP 0/' ./cmake/app.cmake
-   sed -i "/set(HELLO_WORLD_APP 0)/a set("$param"_APP 1)" ./cmake/app.cmake
+   if [[ $2 =~ "qt" ]]
+   then
+       echo "create a qt app"		# create a qt app
+       sed -i "/set(QT_HELLO_WORLD_APP 0)/a set("$param"_APP 1)" ./cmake/app.cmake
+       sed -i 's/set(QT_APP\ 0)/set(QT_APP 1)/' ./cmake/app.cmake
+   else
+       echo "create a usual app"        	# create a normal app
+       sed -i "/set(HELLO_WORLD_APP 0)/a set("$param"_APP 1)" ./cmake/app.cmake
+   fi
+   # exit 0
    cd app/
    sed -i '/endif\ (${HELLO_WORLD_APP})/a\if (${'"$param"'_APP})\
 add_subdirectory('"$2"')\
@@ -18,7 +27,10 @@ endif (${'"$param"'_APP})\
    sed -i 's/test/'"$2"'/' ./$2/$2_thread.h
    sed -i 's/test_thread/'"$2"'_thread/' ./$2/$2_thread.c
    sed -i 's/Thread\ is/Thread_'"$2"' is/' ./$2/$2_thread.c
+   if [[ $2 =~ "qt" ]]
+   then
 
+   fi
    # add app sources
    cd ../bsp
    sed -i '/endif\ (${HELLO_WORLD_APP})/a\if (${'"$param"'_APP})\

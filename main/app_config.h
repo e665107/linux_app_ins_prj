@@ -1,7 +1,5 @@
 /* #undef HELLO_WORLD_APP */
-#define  TEST9_APP
-/* #undef TEST8_APP */
-/* #undef TEST7_APP */
+#define  TEST1_APP
 /* #undef STRUCTURE_APP */
 /* #undef UART_COMMUNICATION_APP */
 /* #undef NET_COMMUNICATION_APP */

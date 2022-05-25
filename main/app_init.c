@@ -26,6 +26,9 @@
 #ifdef HELLO_WORLD_APP
 #include "hello_world_thread.h"
 #endif //HELLO_WORLD_APP
+#ifdef TEST1_APP
+#include "test1_thread.h"
+#endif //TEST1_APP
 #ifdef STRUCTURE_APP
 #include "structures_thread.h"
 #endif //
@@ -60,6 +63,9 @@ void app_init(void)
 #ifdef HELLO_WORLD_APP
     create_thread();
 #endif // HELLO_WORLD_APP
+#ifdef TEST1_APP
+    create_test1_threads();
+#endif //TEST1_APP
 #ifdef STRUCTURE_APP
     create_structure_threads();
 #endif // MACRO

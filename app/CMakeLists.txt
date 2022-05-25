@@ -2,6 +2,11 @@ if (${HELLO_WORLD_APP})
 add_subdirectory(hello_world)
 endif (${HELLO_WORLD_APP})
 
+if (${TEST1_APP})
+add_subdirectory(test1)
+endif (${TEST1_APP})
+
+
 
 if (${UART_COMMUNICATION_APP})
 add_subdirectory(uart_communication)
