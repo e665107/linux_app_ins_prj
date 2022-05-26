@@ -1,4 +1,4 @@
-#ifndef __RX_H
+-#ifndef __RX_H
 #define __RX_H
 
 #include "stdbool.h"

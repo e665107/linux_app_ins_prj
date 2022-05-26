@@ -48,7 +48,9 @@ typedef struct
     uint32_t gmac;
     uint32_t qid;
     uint32_t segs;
-    NIC_RXDescTypeDef *desc;
+    NIC                        frameTable->frame[i].esp.espPayload = frameTable->frame[i].origData + offset_len;
+                        frameTable->frame[i].esp.espPayloadLen = espPayloadLen;
+_RXDescTypeDef *desc;
 } MSG_DECMsgTypeDef;
 
 typedef struct

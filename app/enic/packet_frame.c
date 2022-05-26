@@ -1085,7 +1085,7 @@ int Dissect_ESP(frameTableTypeDef *frameTable)
     pinfo->espBufLen     = skb->dataLen - pinfo->ethLen - pinfo->ipLen;
     pinfo->espHdrLen     = 8;
     pinfo->espIVLen      = 8;
-    pinfo->-espTrailerLen = 2;
+    pinfo->espTrailerLen = 2;
     /* The ICV consists solely of the AES-GCM Authentication Tag.
     Implementations MUST support a full-length 16-octet ICV, and MAY
     support 8 or 12 octet ICVs, and MUST NOT support other ICV lengths. */
@@ -1112,14 +1112,66 @@ int Dissect_ESP(frameTableTypeDef *frameTable)
     pinfo->ipProto = *(pinfo->espTrailer + 1); /* get Next Header */
 #endif
     uint64_t cycles_start, cycles_end;
+    uint32_t segs_total_len;
     MSG_DECMsgTypeDef *dec = (MSG_DECMsgTypeDef *)(skb->opaque + MSG_HEADER);
     uint32_t seg_len, i;
-    frameTable->frame[0].esp.espBufLen = frameTable->frame[0].origDataLen -
-                                        frameTable->frame[0].eth.ethLen - frameTable->frame[0].ip.ipLen;
-    frameTable->frame[0].esp.espHdrLen = 8;
-    frameTable->frame[0].esp.espIVLen = 8;
+    uint8_t *espPayload;
+    uint32_t espPayloadLen;
+    uint32_t state = s_Hdr;
+    uint32_t offset_len;
+    segs_total_len = GET_FIELD(dec->desc->desc6, 16, 0xffff);
 
+    for (;;) {
+        switch(state)
+        {
+            case s_Hdr:
+                /* frameTable->frame[0].esp.espBufLen = frameTable->frame[0].origDataLen - frameTable->frame[0].eth.ethLen - frameTable->frame[0].ip.ipLen; */
+                frameTable->frame[0].esp.espHdrLen = 8;
+                frameTable->frame[0].esp.espIVLen = 8;
+                frameTable->frame[0].esp.espHdr = frameTable->frame[0].origData + frameTable->frame[0].eth.ethLen + frameTable->frame[0].ip.ipLen;
+                espPayloadLen = segs_total_len -
+                                frameTable->frame[0].eth.ethLen -
+                                frameTable->frame[0].ip.ipLen -
+                                frameTable->frame[0].esp.espHdrLen -
+                                frameTable->frame[0].esp.espIVLen -
+                                frameTable->frame[0].esp.espICVLen;
+                offset_len = frameTable->frame[0].eth.ethLen +
+                             frameTable->frame[0].ip.ipLen +
+                             frameTable->frame[0].esp.espHdrLen +
+                             frameTable->frame[0].esp.espIVLen;
+                /* segs_total_len -= (frameTable->frame[0].eth.ethLen + */
+                /*                    frameTable->frame[0].ip.ipLen + */
+                /*                    frameTable->frame[0].esp.espHdrLen + */
+                /*                    frameTable->frame[0].esp.espIVLen); */
+                state = s_EspPayload;
+                continue;
+            case s_EspPayload:
+                for (i = 0; i < frameTable->origNents; ++i) {
+                    if(segs_total_len <= frameTable->frame[i].origDataLen) {
+                        frameTable->frame[i].esp.espPayload = frameTable->frame[i].origData + offset_len;
+                        frameTable->frame[i].esp.espPayloadLen = espPayloadLen;
+                        state = s_EspTrailer;
+                        continue;
+                    }
+                    else
+                    {
+                        frameTable->frame[i].esp.espPayload = frameTable->frame[i].origData + offset_len;
+                        frameTable->frame[i].esp.espPayloadLen = espPayloadLen;
+                        segs_total_len -= frameTable->frame[i].origDataLen;
+                    }
+                }
+                continue;
+            case s_EspTrailer:
 
+                continue;
+            case s_EspICV:
+
+                continue;
+        }
+        /* if(frameTable->frame[i].origDataLen < segs_total_len) { */
+        /*     continue; */
+        /* } */
+    }
     /* pinfo->ipProto = *(pinfo->espTrailer + 1); /\* get Next Header *\/ */
     return SECERR_OK;
 }
