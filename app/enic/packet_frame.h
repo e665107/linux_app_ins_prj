@@ -4,13 +4,15 @@
 
 #include "frame.h"
 
-enum state
+typedef enum state
 {
-    s_Hdr = 1,
+    s_EthHdr = 1,
+    s_IpHdr,
+    s_EspHdr,
     s_EspPayload,
     s_EspTrailer,
     s_EspICV
-};
+} Esp_State;
 uint64_t rdtsc_start(void);
 uint64_t rdtsc_end(void);
 

@@ -675,15 +675,27 @@ void IPSec_Decryption(intptr_t msg)
 {
     int ret;
     frameTableTypeDef frameTable;
-
+    NIC_RXDescTypeDef *rx_desc_seg;
     MSG_DECMsgTypeDef *dec = (MSG_DECMsgTypeDef *)(msg + MSG_HEADER);
 
     frameTable.frame[0].origData        = (uint8_t *)(intptr_t)dec->desc->desc9;
     frameTable.frame[0].origDataLen     = GET_FIELD(dec->desc->desc0, 0, 0x3fff);
-    frameTable.direction = INBOUND;
-    frameTable.origNents = dec->segs;
+    /* frameTable.frame[0].rx_desc_seg = (intptr_t)dec->desc->desc11; */
+    rx_desc_seg = (intptr_t)dec->desc->desc11;
 
-    ret = Dissect_Frame(&frameTable);
+    frameTable.direction = INBOUND;
+    frameTable.Nents = dec->segs;
+    frameTable.origNents = frameTable.frame[0].origDataLen;
+
+    for (i = 1; i < frameTable.Nents; ++i) {
+        frameTable.frame[i].origData = (uint8_t *)(intptr_t)rx_desc_seg->desc9;
+        frameTable.frame[i].origDataLen = GET_FIELD(frameTable.frame[i - 1].rx_desc_seg->desc0, 0, 0x3fff);
+        rx_desc_seg = (intptr_t)rx_desc_seg->desc11;
+        frameTable.origNents += frameTable.frame[i].origDataLen;
+    }
+    /* Esp_Packets_Totalen = frameTable.origNents; */
+
+    ret = Dissect_FrameTable(&frameTable);
     /* if ((!!ret)) */
     /*     goto drop; */
 

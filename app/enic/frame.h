@@ -68,6 +68,8 @@ typedef struct {
     ESPTypeDef esp;
     uint8_t *origData;
     uint32_t origDataLen;
+    /* NIC_RXDescTypeDef *rx_desc_seg; */
+    /* uint32_t leftDataLen; */
 } frameTypeDef;
 
 typedef struct {
