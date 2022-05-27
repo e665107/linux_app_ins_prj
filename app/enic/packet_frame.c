@@ -1230,28 +1230,28 @@ int Dissect_FrameTable(frameTableTypeDef *frameTable)
     int ret = SECERR_INVAL;
     Esp_State state = s_Eth;
     frameTypeDef *frame;
-    unsigned int espPayloadLen;
-    unsigned int espTrailerLen;
-    unsigned int espICVLen;
+    unsigned int expectEspPayloadLen;
+    unsigned int expectEspTrailerLen;
+    unsigned int expectEspICVLen;
 
-    unsigned int origDataLenLeft;
+    unsigned int origDataLenRoom;
 
     for (i = 0; i < frameTable->nents; ++i) {
         frame = &frameTable->frame[i];
         origDataLenLeft = frame->origDataLen;
-        for (;;) {
-            switch(state)
-            {
+  repeat:
+        switch(state)
+        {
             case s_EthHdr:
                 frame->eth.ethLen = 14;
                 origDataLenLeft -= frame->eth.ethLen;
                 state = s_Ip;
-                continue;
+                break;
             case s_IpHdr:
                 frame->ip.ipLen = 20;
                 origDataLenLeft -= frame->ip.ipLen;
                 state = s_Hdr;
-                continue;
+                break;
             case s_EspHdr:
                 frame->esp.espHdrLen = 8;
                 frame->esp.espIVLen = 8;
@@ -1268,30 +1268,22 @@ int Dissect_FrameTable(frameTableTypeDef *frameTable)
                 espTrailerLen = frame->esp.espTrailerLen;
                 espICVLen = frame->esp.espICVLen;
                 origDataLenLeft -= (frame->esp.espHdrLen + frame->esp.espIVLen);
-                /* offset_len = frame->eth.ethLen + */
-                /*              frame->ip.ipLen + */
-                /*              frame->esp.espHdrLen + */
-                /*              frame->esp.espIVLen; */
-                /* segs_total_len -= (frameTable->frame[0].eth.ethLen + */
-                /*                    frameTable->frame[0].ip.ipLen + */
-                /*                    frameTable->frame[0].esp.espHdrLen + */
-                /*                    frameTable->frame[0].esp.espIVLen); */
                 state = s_EspPayload;
-                continue;
+                break;
             case s_EspPayload:
                 if(origDataLenLeft < espPayloadLen) {  /* use switch(origDataLenLeft < espPayloadLen) can be good*/
                     frame->esp.espPayload = frame->origData +
                                             (frame->origDataLen - origDataLenLeft);
                     frame->esp.espPayloadLen = origDataLenLeft;
                     espPayloadLen -= origDataLenLeft;
-                } else if(origDataLenLeft >= espPayloadLen) {
+                } else  {
                     frame->esp.espPayload = frame->origData +
                                             (frame->origDataLen - origDataLenLeft);
                     frame->esp.espPayloadLen = espPayloadLen;
                     origDataLenLeft -= espPayloadLen;
                     state = s_EspTrailer;
                 }
-                continue;
+                break;
             case s_EspTrailer:
                 if(origDataLenLeft < espTrailerLen) {  /* use switch(origDataLenLeft < espPayloadLen) can be good*/
                     frame->esp.espTrailer = frame->origData +
@@ -1305,7 +1297,7 @@ int Dissect_FrameTable(frameTableTypeDef *frameTable)
                     origDataLenLeft -= espTrailerLen;
                     state = s_EspICV;
                 }
-                continue;
+                break;
             case s_EspICV:
                 if(origDataLenLeft < espICVLen) {  /* use switch(origDataLenLeft < espPayloadLen) can be good*/
                     frame->esp.espICV = frame->origData +
@@ -1319,9 +1311,10 @@ int Dissect_FrameTable(frameTableTypeDef *frameTable)
                     origDataLenLeft -= espICVLen;
                     break;
                 }
-                continue;
+                break;
+            default:
+                break;
             }
-        }
     }
 }
 
