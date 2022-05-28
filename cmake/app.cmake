@@ -1,6 +1,7 @@
  # app 
 set(HELLO_WORLD_APP 0)
-set(HAPPY_HACK1_APP 1)
+set(CODING_FRAME_APP 1)
+set(HAPPY_HACK1_APP 0)
 set(HAPPY_HACK_APP 0)
 set(TEST1_APP 0)
 set(STRUCTURE_APP 0)
@@ -18,5 +19,6 @@ set(MYSQL_ACCESS_APP 0)
 #qt app
 set(QT_APP 0)
 set(QT_HELLO_WORLD_APP 0)
+set(QT_TEST1_APP 0)
 set(QT_TST1_APP 0)
 

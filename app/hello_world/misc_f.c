@@ -648,7 +648,7 @@ static int pthread_arg_f()
         exit(1);    
     }
 
-    printf("result from thd: %d\n", (int)(res));
+    printf("result from thd: %ld\n", (long)(res));
 
 
     return 0;
@@ -766,7 +766,7 @@ static int lseek_f(void)
         exit(1);
     }
     
-    printf("the offset is : %d\n", off); /* 输出提示信息 */
+    printf("the offset is : %ld\n", off); /* 输出提示信息 */
 
     if(read(fd, buf, 5) == -1){ /* 读取5个字节的文件内容 */
         perror("fail ot read");
@@ -781,7 +781,7 @@ static int lseek_f(void)
         exit(1);
     }
     
-    printf("the offset is : %d\n", off); /* 输出结果 */
+    printf("the offset is : %ld\n", off); /* 输出结果 */
 
     close(fd); /* 关闭文件 */
     exit(0);

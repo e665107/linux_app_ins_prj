@@ -29,6 +29,24 @@ include(${PROJECT_SOURCE_DIR}/cmake/app.cmake)
 # 复用插件
 include(${PROJECT_SOURCE_DIR}/cmake/extentions.cmake)
 
+message("include extension cmake file")
+
+if (${ARM_APP})
+message("include arm header file")
+  
+include_directories(
+  # ${PROJECT_SOURCE_DIR}/app
+  ${PROJECT_SOURCE_DIR}/bsp/inc
+  ${PROJECT_SOURCE_DIR}/flib/inc
+  )
+# lib directories
+link_directories(
+  ${PROJECT_BINARY_DIR}/lib
+)
+
+else()
+message("include x86 header file")
+  
 #header files
 include_directories(
   # ${PROJECT_SOURCE_DIR}/app
@@ -36,18 +54,16 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/flib/inc
   /usr/local/include
   /usr/include
-  # /usr/include/x86_64-linux-gnu/sys/
   )
-# flower_include_directories(
-#   ${PROJECT_SOURCE_DIR}/app
-#   )
-
 # lib directories
 link_directories(
   ${PROJECT_BINARY_DIR}/lib
   /usr/local/lib
   /usr/lib
-)
+)  
+
+endif (${ARM_APP})
+
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)

@@ -4,6 +4,14 @@ if (${HELLO_WORLD_APP})
 )
 endif (${HELLO_WORLD_APP})
 
+if (${CODING_FRAME_APP})
+
+endif (${CODING_FRAME_APP})
+
+if (${QT_TEST1_APP})
+set(SRCS src/delay.c)
+endif (${QT_TEST1_APP})
+
 if (${HAPPY_HACK1_APP})
 set(SRCS src/delay.c)
 endif (${HAPPY_HACK1_APP})
@@ -64,7 +72,14 @@ if (${HTTP_CLIENT_APP})
 )
 endif (${HTTP_CLIENT_APP})
 
+set(SRCS
+    src/thread_common.c
+    src/delay.c
+)
 
 add_library(flib_static STATIC  ${SRCS})
+
+
+
 
 

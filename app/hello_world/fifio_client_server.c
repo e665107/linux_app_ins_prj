@@ -1,5 +1,6 @@
-#include "fifio_client_server.h"
 #include <signal.h>
+#include "fifio_client_server.h"
+#include "error_functions.h"
 
 static char clientFifo[CLIENT_FIFO_NAME_LEN];
 

@@ -1,5 +1,7 @@
 /* #undef HELLO_WORLD_APP */
-#define  HAPPY_HACK1_APP
+#define  CODING_FRAME_APP
+/* #undef QT_TEST1_APP */
+/* #undef HAPPY_HACK1_APP */
 /* #undef HAPPY_HACK_APP */
 /* #undef QT_TST1_APP */
 /* #undef TEST1_APP */

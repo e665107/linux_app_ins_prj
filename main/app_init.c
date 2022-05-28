@@ -26,6 +26,12 @@
 #ifdef HELLO_WORLD_APP
 #include "hello_world_thread.h"
 #endif //HELLO_WORLD_APP
+#ifdef CODING_FRAME_APP
+#include "coding_frame_thread.h"
+#endif //CODING_FRAME_APP
+#ifdef QT_TEST1_APP
+#include "qt_test1_thread.h"
+#endif //QT_TEST1_APP
 #ifdef HAPPY_HACK1_APP
 #include "happy_hack1_thread.h"
 #endif //HAPPY_HACK1_APP
@@ -75,6 +81,12 @@ void app_init(void)
 #ifdef HELLO_WORLD_APP
     create_thread();
 #endif // HELLO_WORLD_APP
+#ifdef CODING_FRAME_APP
+    create_coding_frame_threads();
+#endif //CODING_FRAME_APP
+#ifdef QT_TEST1_APP
+    create_qt_test1_threads();
+#endif //QT_TEST1_APP
 #ifdef HAPPY_HACK1_APP
     create_happy_hack1_threads();
 #endif //HAPPY_HACK1_APP

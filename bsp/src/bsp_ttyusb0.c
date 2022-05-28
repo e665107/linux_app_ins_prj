@@ -18,7 +18,7 @@ int bsp_ttyusb0_init(void)
     struct termios options;
     
     /* serial_fd = open("/dev/ttyUSB0", O_RDWR | O_NOCTTY | O_NDELAY); */
-    serial_fd = open("/dev/ttyUSB0", O_RDWR | O_NOCTTY);
+    serial_fd = open("/dev/ttymxc2", O_RDWR | O_NOCTTY);
 
     if (serial_fd < 0)
     {
@@ -82,6 +82,7 @@ int uart_recv(int fd, char *data, int datalen)
 
     /* printf("ret = %d\n", ret);   */
 //如果返回0，代表在描述符状态改变前已超过timeout时间,错误返回-1
+
     if (FD_ISSET(fd, &fs_read))
     {
         len = read(fd, data, datalen);
@@ -97,10 +98,5 @@ int uart_recv(int fd, char *data, int datalen)
 
     return 0;
 }
-
-
-
-
-
 
 

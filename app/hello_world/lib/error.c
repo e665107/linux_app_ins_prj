@@ -99,7 +99,7 @@ err_doit(int errnoflag, int level, const char *fmt, va_list ap)
 	strcat(buf, "\n");
 
 	if (daemon_proc) {
-		syslog(level, buf);
+		syslog(level, (const char*)buf,NULL);
 	} else {
 		fflush(stdout);		/* in case stdout and stderr are the same */
 		fputs(buf, stderr);

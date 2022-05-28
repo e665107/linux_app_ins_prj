@@ -1,4 +1,6 @@
 #cmakedefine  HELLO_WORLD_APP
+#cmakedefine  CODING_FRAME_APP
+#cmakedefine  QT_TEST1_APP
 #cmakedefine  HAPPY_HACK1_APP
 #cmakedefine  HAPPY_HACK_APP
 #cmakedefine  QT_TST1_APP

@@ -1,18 +1,23 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <string.h>
 #include <signal.h>
 #include <termios.h>
 #include <sys/ioctl.h>
 #include <sys/epoll.h>
-#define _GNU_SOURCE     /* Obtain O_DIRECT definition from <fcntl.h> */
 #define _BSD_SOURCE     /* Get getpass() declaration from <unistd.h> */
 #define _XOPEN_SOURCE       /* See feature_test_macros(7) */       
-
-#include <fcntl.h>
 #include <time.h>
+#include <sys/time.h>
 #include <utime.h>
 #include <poll.h>
 #include <sys/select.h>
 #include <sys/msg.h>
-#include <sys/stat.h>
 #include <stddef.h>
 #include <dirent.h>
 #include <libgen.h>
@@ -21,23 +26,19 @@
 #include <sys/inotify.h>
 #include <limits.h>
 #include <sys/wait.h>
-#include <sys/mman.h>
-/* #define _GNU_SOURCE         /\* See feature_test_macros(7) *\/ */
 #include <crypt.h>
-
 #include <sys/utsname.h>
-
 #define __USE_XOPEN_EXTENDED
 #include <sys/xattr.h>
 #include <shadow.h>
 #include <pwd.h>
-
 #include <ftw.h>
 #include "tlpi_hdr.h"
 #include "error_functions.h"
-
 #include "misc_f1.h"
-
+/*
+ * #define _GNU_SOURCE     /\* Obtain O_DIRECT definition from <fcntl.h> *\/
+ */
 
 
 /* #define _XOPEN_SOURCE 600   /\* Get nftw() and S_IFSOCK declarations *\/ */
@@ -54,7 +55,7 @@
 #define CMD_SIZE 200
 
 #define BUF_LEN (10 * (sizeof(struct inotify_event) + NAME_MAX + 1))
-
+static int remap_pages_f(void);
 
 struct pbuf {
     int msqid;                  /* Origin of message */
@@ -1431,7 +1432,7 @@ static int mmcopy_f()
     exit(EXIT_SUCCESS);
 }
 
-static int remap_file_pages_f()
+static int remap_pages_f()
 {
     int fd, j;
     char ch;
@@ -1443,7 +1444,7 @@ static int remap_file_pages_f()
         errExit("open");
 
     pageSize = sysconf(_SC_PAGESIZE);
-    printf("pagesize= %d\n", pageSize);
+    printf("pagesize= %ld\n", pageSize);
     if (pageSize == -1)
         fatal("Couldn't determine page size");
 
@@ -1724,7 +1725,9 @@ static int memlock_f()
 }
 #define LEN (1024 * 1024)
 #define SHELL_FMT "cat /proc/%ld/maps | grep zero"
-#define CMD_SIZE (sizeof(SHELL_FMT) + 20)
+/*
+ * #define CMD_SIZE (sizeof(SHELL_FMT) + 20)
+ */
 
 static int mprotect_f()
 {

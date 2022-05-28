@@ -11,10 +11,25 @@ if [ "$1" = "clean" ];then
     echo  "cleaned"    
 fi
 
+if [ "$1" = "arm" ];then
+    cd  build
+    cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/arm_linux_cross.cmake ..
+    make -j4
+    echo "comiled done"
+fi
+
+if [ "$1" = "riscv" ];then
+    cd  build
+    cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/riscv_linux_cross.cmake ..
+    make -j4
+    echo "comiled done"
+fi
+
+
 if [ "$1" = "" ];then
     cd  build
     cmake  -G "Unix Makefiles" ../
-    make
+    make -j4
     echo "comiled done"
 fi
 
