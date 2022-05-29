@@ -1,21 +1,21 @@
 
 # Table of Contents
 
-1.  [project](#orgec8ea1b)
-    1.  [介绍](#orgaff7dc6)
-        1.  [特征：](#org70713bc)
-    2.  [使用](#orgc698d53)
-        1.  [手动添加一个linux c/c++ app](#org4452d3c)
-        2.  [自动添加一个linux c/c++ app](#orgc658167)
+1.  [project](#org9c38403)
+    1.  [介绍](#orgc07d2cf)
+        1.  [特征：](#org67d23ec)
+    2.  [使用](#orga1468ba)
+        1.  [手动添加一个linux c/c++ app](#org68ba6ef)
+        2.  [自动添加一个linux c/c++ app](#org1d26747)
 
 
 
-<a id="orgec8ea1b"></a>
+<a id="org9c38403"></a>
 
 # project
 
 
-<a id="orgaff7dc6"></a>
+<a id="orgc07d2cf"></a>
 
 ## 介绍
 
@@ -23,7 +23,7 @@
 以后方便两者之间的相互移植，转换，，适用于Linux下的应用开发。
 
 
-<a id="org70713bc"></a>
+<a id="org67d23ec"></a>
 
 ### 特征：
 
@@ -33,14 +33,15 @@
 4.  借鉴zephyr，成熟工程cmake的组织形式
 5.  初期，采用linux c进行应用的开发，中期添加c++，python, go, shell新的语言
 6.  项目暂时不采用license，做好后使用GPLlicense。
+7.  目前支持x86, arm架构
 
 
-<a id="orgc698d53"></a>
+<a id="orga1468ba"></a>
 
 ## 使用
 
 
-<a id="org4452d3c"></a>
+<a id="org68ba6ef"></a>
 
 ### 手动添加一个linux c/c++ app
 
@@ -60,7 +61,7 @@
 9.  add the app name to the app\_config.in.h
 
 
-<a id="orgc658167"></a>
+<a id="org1d26747"></a>
 
 ### 自动添加一个linux c/c++ app
 
