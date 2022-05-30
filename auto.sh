@@ -4,7 +4,11 @@
 if [ "$1" = "app" ];then
    source ./scripts/shell/create_new_app.sh
 fi
-   
+
+if [ "$1" = "module" ];then
+   source ./scripts/shell/create_new_app.sh
+fi
+
 if [ "$1" = "clean" ];then
     rm -r build
     mkdir build
@@ -25,7 +29,6 @@ if [ "$1" = "riscv" ];then
     echo "comiled done"
 fi
 
-
 if [ "$1" = "" ];then
     cd  build
     cmake  -G "Unix Makefiles" ../
@@ -42,4 +45,13 @@ if [ "$1" = "gdb" ];then
     gdb ./build/bin/test_app
     echo "executed done"
 fi
+
+
+
+
+
+
+
+
+
 

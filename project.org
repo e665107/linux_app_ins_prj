@@ -27,13 +27,192 @@ ps -T -p 1092(进程ID)；可以先ps -a
 ** apps
 *** 
 *** 
-*** 
-*** 
-*** 
-*** 
-*** 
-*** 
-*** 
+** drivers
+thousand drivers development and test
+thousand drivers development and test
+*** use
+1. cd /hello
+2. make ARCH=arm / make ARCH=riscv
+3. cp hello.ko /home/e66/nfs_root/
+*** cmds
+insmod hello.ko
+lsmod
+modprobe hello
+modprobe -r hello
+modinfo hello
+*** TODO ARM drivers [0%]
+**** TODO hello
+***** TODO compile
+***** TODO test
+**** TODO access_file_in_module
+***** TODO compile
+***** TODO test
+**** TODO auto_make_node
+***** TODO compile
+***** TODO test
+**** TODO char_drv
+***** TODO compile
+***** TODO test
+**** TODO timer
+***** DONE compile
+CLOSED: [2022-03-08 二 11:37]
+***** TODO test
+**** TODO hrtimer
+***** DONE compile
+CLOSED: [2022-03-08 二 11:37]
+***** TODO test
+**** TODO kthread
+***** DONE compile
+CLOSED: [2022-03-08 二 11:37]
+***** TODO test
+**** TODO waitqueue
+***** TODO compile
+***** TODO test
+**** TODO dedicated_workqueue
+***** TODO compile
+***** TODO test
+**** TODO device_packaged_data
+***** TODO compile
+***** TODO test
+**** TODO dynamic_register
+***** TODO compile
+***** TODO test
+**** TODO export_symbol
+***** TODO compile
+***** TODO test
+**** TODO framework
+***** TODO compile
+***** TODO test
+**** TODO ioctl
+***** TODO compile
+***** TODO test
+**** TODO kprobe
+***** TODO compile
+***** TODO test
+**** TODO lock
+***** TODO compile
+***** TODO test
+**** TODO lseek
+***** TODO compile
+***** TODO test
+**** TODO mmap
+***** TODO compile
+***** TODO test
+**** TODO multiplexing
+***** TODO compile
+***** TODO test
+**** TODO printk_message_level
+***** TODO compile
+***** TODO test
+**** TODO private_data
+***** TODO compile
+***** TODO test
+**** TODO uio
+***** TODO compile
+***** TODO test
+**** TODO user_kernel_data_access
+***** TODO compile
+***** TODO test
+**** TODO complete
+***** TODO compile
+***** TODO test
+**** TODO
+*** TODO RISCV drivers [20%]
+**** DONE hello [100%]
+CLOSED: [2022-03-08 二 15:36]
+***** DONE compile
+CLOSED: [2022-03-08 二 11:01]
+***** DONE test
+CLOSED: [2022-03-08 二 15:36]
+**** TODO access_file_in_module [0%]
+***** TODO compile
+***** TODO test
+**** TODO auto_make_node [0%]
+***** TODO compile
+***** TODO test
+**** TODO char_drv [0%]
+***** TODO compile
+***** TODO test
+**** DONE timer [100%]
+CLOSED: [2022-03-08 二 15:39]
+***** DONE compile
+CLOSED: [2022-03-08 二 11:01]
+***** DONE test
+CLOSED: [2022-03-08 二 15:39]
+**** TODO hrtimer [100%]
+***** DONE compile
+CLOSED: [2022-03-08 二 15:12]
+***** DONE test
+CLOSED: [2022-03-08 二 15:12]
+**** DONE kthread
+CLOSED: [2022-03-08 二 16:28]
+***** DONE compile
+CLOSED: [2022-03-08 二 16:28]
+***** DONE test
+CLOSED: [2022-03-08 二 16:28]
+**** TODO waitqueue
+***** TODO compile
+***** TODO test
+**** DONE dedicated_workqueue
+CLOSED: [2022-03-08 二 16:00]
+***** DONE compile
+CLOSED: [2022-03-08 二 16:00]
+***** DONE test
+CLOSED: [2022-03-08 二 16:00]
+**** TODO device_packaged_data
+***** TODO compile
+***** TODO test
+**** TODO dynamic_register
+***** TODO compile
+***** TODO test
+**** TODO export_symbol
+***** TODO compile
+***** TODO test
+**** TODO framework
+***** TODO compile
+***** TODO test
+**** TODO ioctl
+***** TODO compile
+***** TODO test
+**** TODO kprobe
+***** TODO compile
+***** TODO test
+**** TODO lock
+***** TODO compile
+***** TODO test
+**** TODO lseek
+***** TODO compile
+***** TODO test
+**** TODO mmap
+***** TODO compile
+***** TODO test
+**** TODO multiplexing
+***** TODO compile
+***** TODO test
+**** TODO printk_message_level
+***** TODO compile
+***** TODO test
+**** TODO private_data
+***** TODO compile
+***** TODO test
+**** TODO uio
+***** TODO compile
+***** TODO test
+**** TODO user_kernel_data_access
+***** TODO compile
+***** TODO test
+**** DONE netlink
+CLOSED: [2022-03-08 二 15:35]
+***** DONE compile
+CLOSED: [2022-03-08 二 15:10]
+***** DONE test
+CLOSED: [2022-03-08 二 15:10]
+***** DONE use
+CLOSED: [2022-03-08 二 15:11]
+1../netlink_app
+2. insmod netlink_module.ko
+>>>>>>> 993102fcae6c03313767ea4076529417e1ee6d4d
+ 
 * 
 ** packages install
 *** mysql

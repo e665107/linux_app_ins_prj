@@ -1,4 +1,4 @@
--#ifndef __RX_H
+#ifndef __RX_H
 #define __RX_H
 
 #include "stdbool.h"
@@ -22,7 +22,7 @@ typedef struct {
 
 /*** Exported_Functions ***/
 void RX_DescChainInit(intptr_t base, int16_t num);
-bool RX_GetPipelineStatus(int32_t gmac, int32_t qid);
+bool RX_GetPipelineStatus(int32_t  gmac, int32_t qid);
 int32_t RX_SetRSSRedirectionTable(uint8_t *tbl);
 bool RX_IsNeedIPsecOffload(GMAC_RXDescTypeDef *desc);
 uint32_t RX_GetDestQueue(GMAC_RXDescTypeDef *desc);

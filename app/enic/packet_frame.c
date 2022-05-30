@@ -1,15 +1,74 @@
--
+
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
 
 #include "msg.h"
 #include "inet.h"
-#include "frame.h"
-#define MSG_HEADER sizeof(uint64_t)
-#ifdef DEBUG
-int IP_Try_Dissect(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo);
+#include "packet_frame.h"
 
+typedef enum {
+    s_eth_hdr,
+    s_ip_hdr,
+    s_esp_hdr,
+    s_esp_iv,
+    s_esp_payload,
+    s_esp_trailer,
+    s_esp_icv,
+} stateTypeDef;
+
+#define CURRENT_STATE()     state
+#define UPDATE_STATE(STATE) state = (stateTypeDef) (STATE);
+#define REDISSECT()         goto redissect;
+#define RETURN(RET)         return(RET);
+
+#define OFFSET(L)                                                              \
+    do {                                                                       \
+        frame->data    += (L);                                                 \
+        frame->dataLen -= (L);                                                 \
+    } while (0)
+
+#if DEBUG
+# define STRICT_CHECK(COND)                                                    \
+    do {                                                                       \
+        if (COND) {                                                            \
+            printf("Frame Unknown: Invalid length/type\n");                    \
+            RETURN(SECERR_INVAL);                                              \
+        }                                                                      \
+    } while (0)
+#else
+# define STRICT_CHECK(COND)
+#endif
+
+#define SUBSET_REMAINING(N, R)                                                 \
+    ({                                                                         \
+        STRICT_CHECK(N > frameTable->nents);                                   \
+        frameTypeDef *__frame = &frameTable->frame[N];                         \
+        __frame->reportedLen = R;                                              \
+        __frame;                                                               \
+    })
+
+/* Offsets of fields within an IP header. */
+#define IPH_V_HL            0
+#define IPH_TOS             1
+#define IPH_LEN             2
+#define IPH_ID              4
+#define IPH_OFF             6
+#define IPH_TTL             8
+#define IPH_P               9
+#define IPH_SUM             10
+#define IPH_SRC             12
+#define IPH_DST             16
+
+#define ETH_HEADER_SIZE     14
+/* Minimum IP header length. */
+#define IPH_MIN_LEN         20
+#define ESP_HEADER_SIZE     8
+#define ESP_IV_SIZE         8
+#define ESP_TRAILER_SIZE    2
+#define ESP_ICV_SIZE        16
+
+#ifdef DEBUG
 #ifndef ETHERTYPE_IP
 #define ETHERTYPE_IP        0x0800
 #endif
@@ -17,51 +76,28 @@ int IP_Try_Dissect(skbufTypeDef *skb, Packet_InfoTypeDef *pinfo);
 #define ETHERTYPE_IPv6      0x86DD
 #endif
 
-/* TCP flags */
-#define TH_FIN  0x0001
-#define TH_SYN  0x0002
-#define TH_RST  0x0004
-#define TH_PUSH 0x0008
-#define TH_ACK  0x0010
-#define TH_URG  0x0020
-#define TH_ECN  0x0040
-#define TH_CWR  0x0080
-#define TH_NS   0x0100
-#define TH_RES  0x0E00 /* 3 reserved bits */
-#define TH_MASK 0x0FFF
-
-#define hi_nibble(b) (((b) & 0xf0) >> 4)
-#define lo_nibble(b) ((b) & 0x0f)
+/* IP protocol numbers. */
+#define IP_PROTO_TCP        6       /* TCP - RFC792 */
+#define IP_PROTO_UDP        17      /* user datagram protocol - RFC768 */
+#define IP_PROTO_ESP        50      /* Encap Security Payload for IPv6 - RFC2406 */
+#define IP_PROTO_UDPLITE    136     /* Lightweight user datagram protocol - RFC3828 */
 
 typedef struct {
     uint32_t value;
     const uint8_t *strptr;
 } Value_StringTypeDef;
 
-/* the tcp header structure, passed to tap listeners */
 typedef struct {
-    uint16_t thSport;
-    uint16_t thDport;
-    uint32_t thSeq;
-    uint32_t thACK;
-    uint8_t  thHLen;
-    uint16_t thFlags;
-    uint32_t thWin;
-    uint16_t thSum;
-    uint16_t thURP;
-} TCP_HDRTypeDef;
-
-typedef struct {
-    uint8_t  ipVer;         /* 4 */
-    uint8_t  ipTOS;         /* type of service */
-    uint32_t ipLen;         /* total length */
-    uint16_t ipID;          /* identification */
-    uint16_t ipOff;         /* fragment offset */
-    uint8_t  ipTTL;         /* time-to-live */
-    uint8_t  ipProto;       /* protocol */
-    uint16_t ipSum;         /* checksum */
-    AddressTypeDef ipSrc;   /* source address */
-    AddressTypeDef ipDst;   /* destination address */
+    uint8_t  ver;           /* 4 */
+    uint8_t  tos;           /* type of service */
+    uint32_t len;           /* total length */
+    uint16_t id;            /* identification */
+    uint16_t off;           /* fragment offset */
+    uint8_t  ttl;           /* time-to-live */
+    uint8_t  proto;         /* protocol */
+    uint16_t sum;           /* checksum */
+    AddressTypeDef src;     /* source address */
+    AddressTypeDef dst;     /* destination address */
 } IPv4_HDRTypeDef;
 
 typedef struct {
@@ -69,6 +105,25 @@ typedef struct {
     AddressTypeDef src;
     uint16_t type;
 } Eth_HDRTypeDef;
+
+typedef struct {
+    uint8_t *realData;
+    uint32_t realDataLen;
+} TVBuffTypeDef;
+
+/*
+ * If a user _does_ pass in a too-small buffer, this is probably
+ * going to be too long to fit.  However, even a partial string
+ * starting with "[Buf" should provide enough of a clue to be
+ * useful.
+ */
+#define Return_IF_NoSpace(strLen, buf, bufLen)                                 \
+    do {                                                                       \
+        if ((strLen) > (bufLen)) {                                             \
+            (void)strncpy(buf, "[Buffer too small]", bufLen);                  \
+            return;                                                            \
+        }                                                                      \
+    } while (0)
 
 static
 const uint8_t bitMask8[] = {
@@ -83,21 +138,8 @@ const uint8_t bitMask8[] = {
     0xff
 };
 
-/*
- * If a user _does_ pass in a too-small buffer, this is probably
- * going to be too long to fit.  However, even a partial string
- * starting with "[Buf" should provide enough of a clue to be
- * useful.
- */
-#define Return_IF_NoSpace(strLen, buf, bufLen)                                 \
-    do {                                                                       \
-        if ((strLen) > (bufLen)) {                                             \
-            (void)strncpy(buf, "[Buffer too small]", bufLen);                  \
-            return;                                                     \
-        }                                                                      \
-    } while (0)
-
-static const char fastStrings[][4] = {
+static
+const char fastStrings[][4] = {
     "0", "1", "2", "3", "4", "5", "6", "7",
     "8", "9", "10", "11", "12", "13", "14", "15",
     "16", "17", "18", "19", "20", "21", "22", "23",
@@ -133,20 +175,21 @@ static const char fastStrings[][4] = {
 };
 
 static
-const Value_StringTypeDef EtypeVals[] = {
-    {ETHERTYPE_IP,      "IPv4"},
-    {ETHERTYPE_IPv6,    "IPv6"},
-    {0,                 NULL  }
-};
-
-static
 const Value_StringTypeDef IPProtoVals[] = {
     {IP_PROTO_TCP,      "TCP"                   },  /* [RFC793] */
     {IP_PROTO_ESP,      "Encap Security Payload"},  /* [RFC4303] */
     {0,                 NULL                    },
 };
 
-const uint8_t *fastEnsureContiguous(skbufTypeDef *skb,
+static
+const Value_StringTypeDef EtypeVals[] = {
+    {ETHERTYPE_IP,      "IPv4"},
+    {ETHERTYPE_IPv6,    "IPv6"},
+    {0,                 NULL  }
+};
+
+__STATIC_FORCEINLINE
+const uint8_t *fastEnsureContiguous(TVBuffTypeDef *tvb,
                                     const int offset,
                                     const uint32_t length)
 {
@@ -156,118 +199,49 @@ const uint8_t *fastEnsureContiguous(skbufTypeDef *skb,
     uOffset = offset;
     endOffset = uOffset + length;
 
-    if (endOffset <= skb->realDataLen) {
-        return skb->realData + uOffset;
+    if (__rv_likely(endOffset <= tvb->realDataLen)) {
+        return tvb->realData + uOffset;
     }
 
     /* not reached */
     return NULL;
 }
 
-/**
- * * LFENCE used to serialize code execution (no OOO)
- * * Load buffers get are empty after lfence, no deliberate restrictions put on store buffers
- * */
-uint64_t rdtsc_start(void)
-{
-    uint32_t cycles_high;
-    uint32_t cycles_low;
-
-    asm volatile("lfence\n\t"
-            "rdtscp\n\t"
-            "mov %%edx, %0\n\t"
-            "mov %%eax, %1\n\t"
-            : "=r" (cycles_high), "=r" (cycles_low)
-            : : "%rax", "%rdx", "%rcx");
-    return (((uint64_t)cycles_high << 32) | cycles_low);
-}
-
-
-uint64_t rdtsc_end(void)
-{
-    uint32_t cycles_high;
-    uint32_t cycles_low;
-
-    asm volatile("rdtscp\n\t"
-            "mov %%edx, %0\n\t"
-            "mov %%eax, %1\n\t"
-            "lfence\n\t"
-            : "=r" (cycles_high), "=r" (cycles_low)
-            : : "%rax", "%rdx", "%rcx");
-
-    return (((uint64_t)cycles_high << 32) | cycles_low);
-}
-
-size_t sg_copy_buffer(struct scatterlist *sgl, unsigned int nents, void *buf,
-		      size_t buflen, off_t skip, bool to_buffer)
-{
-	unsigned int offset = 0;
-	struct sg_mapping_iter miter;
-	unsigned int sg_flags = SG_MITER_ATOMIC;
-#if 0
-	if (to_buffer)
-		sg_flags |= SG_MITER_FROM_SG;
-	else
-		sg_flags |= SG_MITER_TO_SG;
-
-	sg_miter_start(&miter, sgl, nents, sg_flags);
-
-	if (!sg_miter_skip(&miter, skip))
-		return false;
-
-	while ((offset < buflen) && sg_miter_next(&miter)) {
-		unsigned int len;
-
-		len = min(miter.length, buflen - offset);
-
-		if (to_buffer)
-			memcpy(buf + offset, miter.addr, len);
-		else
-			memcpy(miter.addr, buf + offset, len);
-
-		offset += len;
-	}
-
-	sg_miter_stop(&miter);
-#endif
-	return offset;
-}
-
-uint8_t Get_UINT8(skbufTypeDef *skb, const int offset)
+uint8_t TVB_Get_UINT8(TVBuffTypeDef *tvb, const int offset)
 {
     const uint8_t *ptr;
 
-    ptr = fastEnsureContiguous(skb, offset, 1);
+    ptr = fastEnsureContiguous(tvb, offset, 1);
     return *ptr;
 }
 
-uint16_t Get_ntohs(skbufTypeDef *skb, const int offset)
+uint16_t TVB_Get_ntohs(TVBuffTypeDef *tvb, const int offset)
 {
     const uint8_t *ptr;
 
-    ptr = fastEnsureContiguous(skb, offset, 2);
+    ptr = fastEnsureContiguous(tvb, offset, 2);
     return ntoh16(ptr);
 }
 
-uint32_t Get_ntohl(skbufTypeDef *skb, const int offset)
+uint32_t TVB_Get_ntohl(TVBuffTypeDef *tvb, const int offset)
 {
     const uint8_t *ptr;
 
-    ptr = fastEnsureContiguous(skb, offset, 4);
+    ptr = fastEnsureContiguous(tvb, offset, 4);
     return ntoh32(ptr);
 }
 
-uint64_t Get_ntoh64(skbufTypeDef *skb, const int offset)
+uint64_t TVB_Get_ntoh64(TVBuffTypeDef *tvb, const int offset)
 {
     const uint8_t *ptr;
 
-    ptr = fastEnsureContiguous(skb, offset, 8);
+    ptr = fastEnsureContiguous(tvb, offset, 8);
     return ntoh64(ptr);
 }
 
-uint64_t Get_Bits64(skbufTypeDef *skb,
-                    uint32_t bitOffset,
-                    const int32_t Total_No_Of_Bits)
+uint64_t TVB_Get_Bits64(TVBuffTypeDef *tvb,
+                        uint32_t bitOffset,
+                        const int32_t Total_No_Of_Bits)
 {
     uint64_t value;
     uint32_t octetOffset = bitOffset >> 3;
@@ -276,7 +250,7 @@ uint64_t Get_Bits64(skbufTypeDef *skb,
     if (Required_Bits_In_First_Octet > Total_No_Of_Bits) {
         /* the required bits don't extend to the end of the first octet */
         uint8_t rightShift = Required_Bits_In_First_Octet - Total_No_Of_Bits;
-        value = (Get_UINT8(skb, octetOffset) >> rightShift) & bitMask8[Total_No_Of_Bits % 8];
+        value = (TVB_Get_UINT8(tvb, octetOffset) >> rightShift) & bitMask8[Total_No_Of_Bits % 8];
     } else {
         uint8_t remainingBitLength = Total_No_Of_Bits;
 
@@ -284,7 +258,7 @@ uint64_t Get_Bits64(skbufTypeDef *skb,
         value = 0;
         Required_Bits_In_First_Octet %= 8;
         if (Required_Bits_In_First_Octet != 0) {
-            value = Get_UINT8(skb, octetOffset) & bitMask8[Required_Bits_In_First_Octet];
+            value = TVB_Get_UINT8(tvb, octetOffset) & bitMask8[Required_Bits_In_First_Octet];
             remainingBitLength -= Required_Bits_In_First_Octet;
             octetOffset++;
         }
@@ -294,7 +268,7 @@ uint64_t Get_Bits64(skbufTypeDef *skb,
             case 0:
                 /* 8 - 15 bits. (note that 0 - 7 would have dropped out of the while() loop) */
                 value <<= 8;
-                value += Get_UINT8(skb, octetOffset);
+                value += TVB_Get_UINT8(tvb, octetOffset);
                 remainingBitLength -= 8;
                 octetOffset++;
                 break;
@@ -302,7 +276,7 @@ uint64_t Get_Bits64(skbufTypeDef *skb,
             case 1:
                 /* 16 - 31 bits */
                 value <<= 16;
-                value += Get_ntohs(skb, octetOffset);
+                value += TVB_Get_ntohs(tvb, octetOffset);
                 remainingBitLength -= 16;
                 octetOffset += 2;
                 break;
@@ -311,14 +285,14 @@ uint64_t Get_Bits64(skbufTypeDef *skb,
             case 3:
                 /* 32 - 63 bits */
                 value <<= 32;
-                value += Get_ntohl(skb, octetOffset);
+                value += TVB_Get_ntohl(tvb, octetOffset);
                 remainingBitLength -= 32;
                 octetOffset += 4;
                 break;
 
             default:
                 /* 64 bits (or more???) */
-                value = Get_ntoh64(skb, octetOffset);
+                value = TVB_Get_ntoh64(tvb, octetOffset);
                 remainingBitLength -= 64;
                 octetOffset += 8;
                 break;
@@ -327,7 +301,7 @@ uint64_t Get_Bits64(skbufTypeDef *skb,
         /* get bits from any partial octet at the tail */
         if (remainingBitLength) {
             value <<= remainingBitLength;
-            value += (Get_UINT8(skb, octetOffset) >> (8 - remainingBitLength));
+            value += (TVB_Get_UINT8(tvb, octetOffset) >> (8 - remainingBitLength));
         }
     }
 
@@ -335,16 +309,17 @@ uint64_t Get_Bits64(skbufTypeDef *skb,
 }
 
 /* Get 1 - 8 bits */
-uint8_t Get_Bits8(skbufTypeDef *skb,
-                  uint32_t bitOffset,
-                  const int32_t No_Of_Bits)
+uint8_t TVB_Get_Bits8(TVBuffTypeDef *tvb,
+                      uint32_t bitOffset,
+                      const int32_t No_Of_Bits)
 {
-    return (uint8_t)Get_Bits64(skb, bitOffset, No_Of_Bits);
+    return (uint8_t)TVB_Get_Bits64(tvb, bitOffset, No_Of_Bits);
 }
 
-const uint8_t *Try_Val_TO_StrIdx(const uint32_t val,
-                                 const Value_StringTypeDef *vs,
-                                 int32_t *idx)
+const uint8_t *
+Try_Val_TO_StrIdx(const uint32_t val,
+                  const Value_StringTypeDef *vs,
+                  int32_t *idx)
 {
     int32_t i = 0;
 
@@ -384,6 +359,7 @@ Val_To_StrConst(const uint32_t val,
     return unknownStr;
 }
 
+__STATIC_FORCEINLINE
 char Low_Nibble_Of_Octet_ToHex(uint8_t oct)
 {
     /* At least one version of Apple's C compiler/linker is buggy, causing
@@ -400,6 +376,7 @@ char Low_Nibble_Of_Octet_ToHex(uint8_t oct)
     return hex_digits[oct & 0xF];
 }
 
+__STATIC_FORCEINLINE
 char *Byte_ToHex(char *out, uint32_t dword)
 {
     *out++ = Low_Nibble_Of_Octet_ToHex(dword >> 4);
@@ -422,20 +399,11 @@ char *Bytes_To_Hexstr_Punct(char *out,
     return out;
 }
 
-const uint8_t *Ethernet_TOStr(const AddressTypeDef *addr,
-                              uint8_t *buf, int bufLen)
-{
-    Bytes_To_Hexstr_Punct(buf, (const uint8_t *)addr->data, 6, ':');
-    buf[17] = '\0';
-    return buf;
-}
-
 /*
    This function is very fast and this function is called a lot.
    XXX update the address_to_str stuff to use this function.
    */
-void
-IP_To_STR_Buf(const uint8_t *ad, uint8_t *buf, const int buf_len)
+void IP_To_STR_Buf(const uint8_t *ad, uint8_t *buf, const int buf_len)
 {
     register uint8_t const *p;
     register uint8_t *b = buf;
@@ -475,6 +443,14 @@ const uint8_t *IPV4_TOStr(const AddressTypeDef *addr,
                           uint8_t *buf, int bufLen)
 {
     IP_To_STR_Buf((const uint8_t *)addr->data, buf, bufLen);
+    return buf;
+}
+
+const uint8_t *Ether_TOStr(const AddressTypeDef *addr,
+                           uint8_t *buf, int bufLen)
+{
+    Bytes_To_Hexstr_Punct(buf, (const uint8_t *)addr->data, 6, ':');
+    buf[17] = '\0';
     return buf;
 }
 
@@ -535,7 +511,7 @@ Decode_Bits_IN_Field(const uint32_t bit_offset,
 }
 
 char *
-Add_Bits_Format_Value(skbufTypeDef *skb,
+Add_Bits_Format_Value(TVBuffTypeDef *tvb,
                       const uint32_t bit_offset,
                       const uint32_t no_of_bits,
                       char *value_str)
@@ -548,7 +524,7 @@ Add_Bits_Format_Value(skbufTypeDef *skb,
     }
 
     if (no_of_bits < 65) {
-        value = Get_Bits64(skb, bit_offset, no_of_bits);
+        value = TVB_Get_Bits64(tvb, bit_offset, no_of_bits);
     } else {
         printf("has a bit width of %u > 65", no_of_bits);
         return NULL;
@@ -561,7 +537,7 @@ Add_Bits_Format_Value(skbufTypeDef *skb,
 }
 
 const char *
-UINT_Bits_Format_Value(skbufTypeDef *skb,
+UINT_Bits_Format_Value(TVBuffTypeDef *tvb,
                        const uint32_t bit_offset,
                        const uint32_t no_of_bits,
                        const char *format, ...)
@@ -575,415 +551,52 @@ UINT_Bits_Format_Value(skbufTypeDef *skb,
     vsnprintf(dst, sizeof(dst), format, ap);
     va_end(ap);
 
-    return Add_Bits_Format_Value(skb, bit_offset, no_of_bits, dst);
+    return Add_Bits_Format_Value(tvb, bit_offset, no_of_bits, dst);
 }
 
-#if 0
-int Dissect_ESP(frameTableTypeDef *frameTable)
+static void Print_Frame_ESP(frameTableTypeDef *frameTable)
 {
-    int ret = SECERR_OK;
-    /* get esp info */
-    pinfo->espBufLen      = skb->realDataLen;
-    pinfo->espHdrLen      = 8;
-    pinfo->espIVLen       = 8;
-    pinfo->espTrailerLen  = 2;
-    /* The ICV consists solely of the AES-GCM Authentication Tag.
-    Implementations MUST support a full-length 16-octet ICV, and MAY
-    support 8 or 12 octet ICVs, and MUST NOT support other ICV lengths. */
-    pinfo->espICVLen      = 16;
-    pinfo->espPayloadLen  = pinfo->espBufLen -
-                            pinfo->espHdrLen -
-                            pinfo->espIVLen -
-                            pinfo->espICVLen;
-    pinfo->espBuf         = skb->realData;
-    pinfo->espHdr         = pinfo->espBuf;
-    pinfo->espIV          = pinfo->espHdr + pinfo->espHdrLen;
-    pinfo->espPayload     = pinfo->espBuf +
-                            pinfo->espHdrLen +
-                            pinfo->espIVLen;
-    pinfo->espTrailer     = pinfo->espBuf +
-                            pinfo->espHdrLen +
-                            pinfo->espIVLen +
-                            (pinfo->espPayloadLen - pinfo->espTrailerLen);
-    pinfo->espICV         = pinfo->espBuf +
-                            pinfo->espHdrLen +
-                            pinfo->espIVLen +
-                            pinfo->espPayloadLen;
-
-    switch (pinfo->direction) {
-    case INBOUND: {
-        uint32_t spi = 0;
-        uint32_t sequenceNumber;
-
-        spi                   = ntoh32(pinfo->espHdr);
-        sequenceNumber        = ntoh32(pinfo->espHdr + 4);
-
-        printf("    Encapsulating Security Payload \n"
-               "      ESP SPI: 0x%08x (%u) \n"
-               "      ESP Sequence: %u \n",
-               spi, spi,
-               sequenceNumber);
-    }
-    break;
-    case OUTBOUND: {
-        uint64_t iv;
-        uint32_t spi = 0;
-        uint32_t sequenceNumber;
-        uint8_t esp_Pad_Len;
-        uint8_t encapsulated_Protocol;
-
-        spi                   = ntoh32(pinfo->espHdr);
-        sequenceNumber        = ntoh32(pinfo->espHdr + 4);
-        iv                    = ntoh64(pinfo->espIV);
-        esp_Pad_Len           = *pinfo->espTrailer;
-        encapsulated_Protocol = *(pinfo->espTrailer + 1);
-
-        printf("    Encapsulating Security Payload \n"
-               "      ESP SPI: 0x%08x (%u) \n"
-               "      ESP Sequence: %u \n"
-               "      ESP IV: %016lx \n"
-               "      ESP Pad Length: %u \n"
-               "      Next header: %s (0x%02x) \n",
-               spi, spi,
-               sequenceNumber,
-               iv,
-               esp_Pad_Len,
-               Val_To_StrConst(encapsulated_Protocol, IPProtoVals, "Unknown"),
-               encapsulated_Protocol);
-
-        pinfo->ipProto   = encapsulated_Protocol; /* get Next Header */
-        skb->realData    = pinfo->espPayload;
-        skb->realDataLen = pinfo->espPayloadLen -
-                           esp_Pad_Len -
-                           pinfo->espTrailerLen;
-
-        ret = IP_Try_Dissect(skb, pinfo);
-    }
-    break;
-    }
-
-    return ret;
-}
-#endif
-#if 0
-__STATIC_FORCEINLINE
-int Dissect_ESP(frameTableTypeDef *frameTable)
-{
-#if 0
-    /* get esp info */
-    pinfo->espBufLen     = skb->dataLen - pinfo->ethLen - pinfo->ipLen;
-    pinfo->espHdrLen     = 8;
-    pinfo->espIVLen      = 8;
-    pinfo->espTrailerLen = 2;
-    /* The ICV consists solely of the AES-GCM Authentication Tag.
-    Implementations MUST support a full-length 16-octet ICV, and MAY
-    support 8 or 12 octet ICVs, and MUST NOT support other ICV lengths. */
-    pinfo->espICVLen     = 16;
-    pinfo->espPayloadLen = pinfo->espBufLen -
-                           pinfo->espHdrLen -
-                           pinfo->espIVLen -
-                           pinfo->espICVLen;
-    pinfo->espBuf        = skb->data    + pinfo->ethLen + pinfo->ipLen;
-    pinfo->espHdr        = pinfo->espBuf;
-    pinfo->espIV         = pinfo->espHdr + pinfo->espHdrLen;
-    pinfo->espPayload    = pinfo->espBuf +
-                           pinfo->espHdrLen +
-                           pinfo->espIVLen;
-    pinfo->espTrailer    = pinfo->espBuf +
-                           pinfo->espHdrLen +
-                           pinfo->espIVLen +
-                           (pinfo->espPayloadLen - pinfo->espTrailerLen);
-    pinfo->espICV        = pinfo->espBuf +
-                           pinfo->espHdrLen +
-                           pinfo->espIVLen +
-                           pinfo->espPayloadLen;
-
-    pinfo->ipProto = *(pinfo->espTrailer + 1); /* get Next Header */
-#endif
-    uint64_t cycles_start, cycles_end;
-    MSG_DECMsgTypeDef *dec = (MSG_DECMsgTypeDef *)(skb->opaque + MSG_HEADER);
-    NIC_RXDescTypeDef *rx_desc_seg;
-    NIC_RXDescTypeDef *rx_desc_seg_last_second;
-
-    uint32_t seg_len, i;
-    /* get esp info */
-    pinfo->espBufLen     = skb->dataLen - pinfo->ethLen - pinfo->ipLen; /* consider change */
-    pinfo->espHdrLen     = 8;  /* not change */
-    pinfo->espIVLen      = 8;  /* not change */
-    pinfo->espTrailerLen = 2;  /* not change */
-    /* The ICV consists solely of the AES-GCM Authentication Tag.
-    Implementations MUST support a full-length 16-octet ICV, and MAY
-    support 8 or 12 octet ICVs, and MUST NOT support other ICV lengths. */
-    pinfo->espICVLen[3]     = 16; /* not change */
-
-    pinfo->espBuf        = skb->data    + pinfo->ethLen + pinfo->ipLen;/* consider change */
-    pinfo->espHdr        = pinfo->espBuf;  /* not change */
-    pinfo->espIV         = pinfo->espHdr + pinfo->espHdrLen; /* not change */
-    pinfo->espPayload[0] = pinfo->espBuf +
-                           pinfo->espHdrLen +
-                           pinfo->espIVLen;/* consider change */
-
-    if(1 == pinfo->segs) {
-        pinfo->espPayloadLen[0] = pinfo->espBufLen -
-                                  pinfo->espHdrLen -
-                                  pinfo->espIVLen -
-                                  pinfo->espICVLen[3];  /* consider change */
-        pinfo->espTrailer       = pinfo->espBuf +
-                                  pinfo->espHdrLen +
-                                  pinfo->espIVLen +
-                                  (pinfo->espPayloadLen[0] - pinfo->espTrailerLen); /* consider change */
-        pinfo->espICV[0]        = pinfo->espBuf +
-                                  pinfo->espHdrLen +
-                                  pinfo->espIVLen +
-                                  pinfo->espPayloadLen[0]; /* consider change */
-        pinfo->espICVLen[0]     = 16; /* not change */
-
-    } else if(2 == pinfo->segs) {
-        rx_desc_seg = (NIC_RXDescTypeDef *) dec->desc->desc11;
-        seg_len = GET_FIELD(rx_desc_seg->desc0, 0, 0x3fff);  /* second seg length */
-        if(seg_len < pinfo->espICVLen[3]) {                  /* pinfo->espICVLen[3] ---change to a macro*/
-            /* pinfo->espBuflen - pinfo->espHdrlen - pinfo->espIVlen---change to a variable */
-            pinfo->espPayloadLen[0] = pinfo->espBufLen -
-                                      pinfo->espHdrLen -
-                                      pinfo->espIVLen -
-                                      (pinfo->espICVLen[3] - seg_len);  /* consider change */
-            pinfo->espPayloadLen[1] = 0;
-            pinfo->espTrailer       = pinfo->espBuf +
-                                      pinfo->espHdrLen +
-                                      pinfo->espIVLen +
-                                      (pinfo->espPayloadLen[0] - pinfo->espTrailerLen); /* consider change */
-            pinfo->espICV[0]        = pinfo->espBuf +
-                                      pinfo->espHdrLen +
-                                      pinfo->espIVLen +
-                                      pinfo->espPayloadLen[0]; /* consider change */
-            pinfo->espICVLen[0]     = pinfo->espICVLen[3] - seg_len;
-
-            pinfo->espICV[1]        = rx_desc_seg->desc9;
-            pinfo->espICVLen[1]     = seg_len;
-            pinfo->espPayload[1]    = NULL;
-        } else {
-            pinfo->espPayloadLen[0] = pinfo->espBufLen -
-                                      pinfo->espHdrLen -
-                                      pinfo->espIVLen;  /* consider change */
-            pinfo->espPayloadLen[1] = seg_len - pinfo->espICVLen[3];
-            if(pinfo->espPayloadLen[1] >= pinfo->espTrailerLen) {  /* espTrailer location */
-                pinfo->espTrailer       = rx_desc_seg->desc9 +
-                                          (pinfo->espPayloadLen[1] - pinfo->espTrailerLen); /* consider change */
-            } else {
-                pinfo->espTrailer       = pinfo->espBuf +
-                                          pinfo->espHdrLen +
-                                          pinfo->espIVLen +
-                                          (pinfo->espPayloadLen[0] - pinfo->espTrailerLen); /* consider change */
-            }
-            pinfo->espICV[0]        = rx_desc_seg->desc9 + pinfo->espPayloadLen[1];
-            pinfo->espICVLen[0]     = pinfo->espICVLen[3];
-            pinfo->espPayload[1]    = rx_desc_seg->desc9;
-        }
-    } else if (2 < pinfo->segs) {
-            cycles_start = rdtsc_start();
-            rx_desc_seg = (NIC_RXDescTypeDef *) dec->desc->desc11;  /* seg[1] */
-            for (i = 0; i < (pinfo->segs - 2); i++) {
-                rx_desc_seg = (NIC_RXDescTypeDef *)rx_desc_seg->desc11;  /* from seg[2] on */
-                for (i = 0; pinfo->segs > 3, i < (pinfo->segs - 3); i++) { /* > 3 segments*/
-                    pinfo->espPayload[i+1] = rx_desc_seg->desc9;
-                    pinfo->espPayloadLen[i+1] = rx_desc_seg->desc0;
-                }
-                if(i == pinfo->segs - 1) {  /* last second  */
-                    rx_desc_seg_last_second = rx_desc_seg;
-                }
-            }
-            cycles_end = rdtsc_end();
-            printf("time consumed %lu cycles\n", cycles_end - cycles_start);
-            seg_len = GET_FIELD(rx_desc_seg->desc0, 0, 0x3fff);  /* second seg length */
-            pinfo->espPayloadLen[0] = pinfo->espBufLen -
-                                      pinfo->espHdrLen -
-                                      pinfo->espIVLen;
-            if(seg_len < pinfo->espICVLen[3]) {
-                pinfo->espPayloadLen[pinfo->segs-2] = rx_desc_seg_last_second->desc0-
-                                                      (pinfo->espICVLen[3] - seg_len);  /* consider change */
-                pinfo->espPayloadLen[pinfo->segs-1] = 0;
-                pinfo->espTrailer       = rx_desc_seg_last_second->desc9 +
-                                          (pinfo->espPayloadLen[pinfo->segs-2] - pinfo->espTrailerLen); /* consider change */
-                pinfo->espICV[0]        = rx_desc_seg_last_second->desc9  +
-                                          pinfo->espPayloadLen[pinfo->segs-2]; /* consider change */
-                pinfo->espICV[1]        = rx_desc_seg->desc9;
-                pinfo->espPayload[2]    = NULL;
-            } else {
-                pinfo->espPayloadLen[pinfo->segs-2] = rx_desc_seg_last_second->desc0;
-                pinfo->espPayloadLen[pinfo->segs-1] = seg_len - pinfo->espICVLen[3];
-                if(pinfo->espPayloadLen[pinfo->segs-1] >= pinfo->espTrailerLen) {  /* espTrailer location */
-                    pinfo->espTrailer       = rx_desc_seg->desc9 +
-                                              (pinfo->espPayloadLen[pinfo->segs-1] - pinfo->espTrailerLen); /* consider change */
-                } else {
-                    pinfo->espTrailer       = rx_desc_seg_last_second->desc9  +
-                                              (pinfo->espPayloadLen[pinfo->segs-2] - pinfo->espTrailerLen); /* consider change */
-                }
-                pinfo->espICV[0]        = rx_desc_seg->desc9 + pinfo->espPayloadLen[pinfo->segs-1];
-                pinfo->espPayload[pinfo->segs-1]    = rx_desc_seg->desc9;
-            }
-        }
-
-    pinfo->ipProto = *(pinfo->espTrailer + 1); /* get Next Header */
-    return SECERR_OK;
-}
-#endif
-__STATIC_FORCEINLINE
-int Dissect_ESP(frameTableTypeDef *frameTable)
-{
-#if 0
-    /* get esp info */
-    pinfo->espBufLen     = skb->dataLen - pinfo->ethLen - pinfo->ipLen;
-    pinfo->espHdrLen     = 8;
-    pinfo->espIVLen      = 8;
-    pinfo->espTrailerLen = 2;
-    /* The ICV consists solely of the AES-GCM Authentication Tag.
-    Implementations MUST support a full-length 16-octet ICV, and MAY
-    support 8 or 12 octet ICVs, and MUST NOT support other ICV lengths. */
-    pinfo->espICVLen     = 16;
-    pinfo->espPayloadLen = pinfo->espBufLen -
-                           pinfo->espHdrLen -
-                           pinfo->espIVLen -
-                           pinfo->espICVLen;
-    pinfo->espBuf        = skb->data    + pinfo->ethLen + pinfo->ipLen;
-    pinfo->espHdr        = pinfo->espBuf;
-    pinfo->espIV         = pinfo->espHdr + pinfo->espHdrLen;
-    pinfo->espPayload    = pinfo->espBuf +
-                           pinfo->espHdrLen +
-                           pinfo->espIVLen;
-    pinfo->espTrailer    = pinfo->espBuf +
-                           pinfo->espHdrLen +
-                           pinfo->espIVLen +
-                           (pinfo->espPayloadLen - pinfo->espTrailerLen);
-    pinfo->espICV        = pinfo->espBuf +
-                           pinfo->espHdrLen +
-                           pinfo->espIVLen +
-                           pinfo->espPayloadLen;
-
-    pinfo->ipProto = *(pinfo->espTrailer + 1); /* get Next Header */
-#endif
-    uint64_t cycles_start, cycles_end;
-    MSG_DECMsgTypeDef *dec = (MSG_DECMsgTypeDef *)(skb->opaque + MSG_HEADER);
-    NIC_RXDescTypeDef *rx_desc_seg;
-    NIC_RXDescTypeDef *rx_desc_seg_last_second;
-
-
-    pinfo->ipProto = *(pinfo->espTrailer + 1); /* get Next Header */
-    return SECERR_OK;
-}
-int Dissect_TCP(frameTableTypeDef *frameTable)
-{
-    /* Minimum TCP header length. */
-#define TCPH_MIN_LEN            20
-
-    uint8_t th_Off_X2;      /* combines th_off and th_x2 */
-    uint32_t optLen;
-    TCP_HDRTypeDef tcph;
-
-    tcph.thSport = Get_ntohs(skb, 0);
-    tcph.thDport = Get_ntohs(skb, 2);
-    tcph.thSeq   = Get_ntohl(skb, 4);
-    tcph.thACK   = Get_ntohl(skb, 8);
-    th_Off_X2    = Get_UINT8(skb, 12);
-    tcph.thHLen  = hi_nibble(th_Off_X2) * 4;
-    tcph.thFlags = Get_ntohs(skb, 12) & TH_MASK;
-    tcph.thWin   = Get_ntohs(skb, 14);
-    tcph.thSum   = Get_ntohs(skb, 16);
-    tcph.thURP   = Get_ntohs(skb, 18);
-
-    optLen = tcph.thHLen - TCPH_MIN_LEN; /* length of options, in bytes */
-
-    printf("    Transmission Control Protocol, Src Port: %u, Dst Port: %u, Seq: %u, Len: %u \n"
-           "      Source Port: %u \n"
-           "      Destination Port: %u \n"
-           "      Sequence number: %u \n"
-           "      Acknowledgment number: %u \n"
-           "      Header Length: %u bytes (%u) \n"
-           "      Flags: 0x%03x \n"
-           "      Window size value: %u \n"
-           "      Checksum: 0x%04x \n"
-           "      Urgent pointer: %u \n"
-           "      Options: (%u bytes) \n",
-           tcph.thSport, tcph.thDport, tcph.thSeq, tcph.thHLen,
-           tcph.thSport,
-           tcph.thDport,
-           tcph.thSeq,
-           tcph.thACK,
-           tcph.thHLen, tcph.thHLen >> 2,
-           tcph.thFlags,
-           tcph.thWin,
-           tcph.thSum,
-           tcph.thURP,
-           optLen
-          );
-
-    return SECERR_OK;
-
-#undef TCPH_MIN_LEN
+    return;
 }
 
-int Dissect_UDP(frameTableTypeDef *frameTable)
+static void Print_Frame_IPv4(frameTableTypeDef *frameTable)
 {
-    /* FIXME */
-    return SECERR_OK;
-}
-
-int IP_Try_Dissect(frameTableTypeDef *frameTable)
-{
-    int ret = SECERR_INVAL;
-
-    switch (frameTable->frame[0].ip.ipProto) {
-    case IP_PROTO_ESP:
-        ret = Dissect_ESP(frameTable);
-        break;
-    case IP_PROTO_TCP:
-        ret = Dissect_TCP(frameTable);
-        break;
-    case IP_PROTO_UDP:
-        ret = Dissect_UDP(frameTable);
-        break;
-    default:
-        printf("Bogus IP proto \n");
-        break;
-    }
-    return ret;
-}
-
-int dissect_IPv4(frameTableTypeDef *frameTable)
-{
-    /* Minimum IP header length. */
-#define IPH_MIN_LEN             20
-
+    uint8_t src[32];
+    uint8_t dst[32];
     uint32_t hLen, optLen;
-    IPv4_HDRTypeDef iph;
-    uint8_t srcStr[32], dstStr[32];
 
-    iph.ipVer = Get_Bits8(skb, 0, 4);
-    hLen = Get_Bits8(skb, 4, 4) * 4;  /* IP header length, in bytes */
+    TVBuffTypeDef tvb;
+    IPv4_HDRTypeDef ipHDR;
+
+    tvb.realData    = frameTable->frame[0].ip.hdr;
+    tvb.realDataLen = frameTable->frame[0].ip.hdrLen;
+
+    ipHDR.ver = TVB_Get_Bits8(&tvb, 0, 4);
+    hLen = TVB_Get_Bits8(&tvb, 4, 4) * 4;  /* IP header length, in bytes */
     if ((hLen < IPH_MIN_LEN)) {
         printf("Bogus IP header length (%u, must be at least %u)",
                hLen, IPH_MIN_LEN);
-        return SECERR_INVAL;
+        return;
     }
 
-    iph.ipTOS   = Get_UINT8(skb, IPH_TOS);
-    iph.ipLen   = Get_ntohs(skb, IPH_LEN);
-    iph.ipID    = Get_ntohs(skb, IPH_ID);
-    iph.ipOff   = Get_ntohs(skb, IPH_OFF);
-    iph.ipTTL   = Get_UINT8(skb, IPH_TTL);
-    iph.ipProto = Get_UINT8(skb, IPH_P);
-    iph.ipSum   = Get_ntohs(skb, IPH_SUM);
-    setAddress(&iph.ipSrc, AT_IPv4, 4, skb->realData + IPH_SRC);
-    setAddress(&iph.ipDst, AT_IPv4, 4, skb->realData + IPH_DST);
-    pinfo->dst[0] = Get_ntohl(skb, IPH_DST);
-    pinfo->addressType = AT_IPv4;
+    ipHDR.tos   = TVB_Get_UINT8(&tvb, IPH_TOS);
+    ipHDR.len   = TVB_Get_ntohs(&tvb, IPH_LEN);
+    ipHDR.id    = TVB_Get_ntohs(&tvb, IPH_ID);
+    ipHDR.off   = TVB_Get_ntohs(&tvb, IPH_OFF);
+    ipHDR.ttl   = TVB_Get_UINT8(&tvb, IPH_TTL);
+    ipHDR.proto = TVB_Get_UINT8(&tvb, IPH_P);
+    ipHDR.sum   = TVB_Get_ntohs(&tvb, IPH_SUM);
+    setAddress(&ipHDR.src, AT_IPv4, 4, fastEnsureContiguous(&tvb, IPH_SRC, 4));
+    setAddress(&ipHDR.dst, AT_IPv4, 4, fastEnsureContiguous(&tvb, IPH_DST, 4));
+
     printf("    Internet Protocol Version %u, Src: %s, Dst: %s\n",
-           iph.ipVer,
-           IPV4_TOStr(&iph.ipSrc, srcStr, sizeof(srcStr)),
-           IPV4_TOStr(&iph.ipDst, dstStr, sizeof(dstStr)));
+           ipHDR.ver,
+           IPV4_TOStr(&ipHDR.src, src, sizeof(src)),
+           IPV4_TOStr(&ipHDR.dst, dst, sizeof(dst)));
     printf("      %s\n",
-           UINT_Bits_Format_Value(skb, 0, 4, " = Version: %u", iph.ipVer));
+           UINT_Bits_Format_Value(&tvb, 0, 4, " = Version: %u", ipHDR.ver));
     printf("      %s\n",
-           UINT_Bits_Format_Value(skb, 4, 4,
+           UINT_Bits_Format_Value(&tvb, 4, 4,
                                   " = Header Length: %u bytes (%u)",
                                   hLen, hLen >> 2));
     printf("      Differentiated Services Field: 0x%02x\n"
@@ -995,327 +608,178 @@ int dissect_IPv4(frameTableTypeDef *frameTable)
            "      Header checksum: 0x%04x\n"
            "      Source: %s\n"
            "      Destination: %s\n",
-           iph.ipTOS,
-           iph.ipLen,
-           iph.ipID, iph.ipID,
-           iph.ipOff,
-           iph.ipTTL,
-           Val_To_StrConst(iph.ipProto, IPProtoVals, "Unknown"), iph.ipProto,
-           iph.ipSum,
-           IPV4_TOStr(&iph.ipSrc, srcStr, sizeof(srcStr)),
-           IPV4_TOStr(&iph.ipDst, dstStr, sizeof(dstStr)));
+           ipHDR.tos,
+           ipHDR.len,
+           ipHDR.id, ipHDR.id,
+           ipHDR.off,
+           ipHDR.ttl,
+           Val_To_StrConst(ipHDR.proto, IPProtoVals, "Unknown"), ipHDR.proto,
+           ipHDR.sum,
+           IPV4_TOStr(&ipHDR.src, src, sizeof(src)),
+           IPV4_TOStr(&ipHDR.dst, dst, sizeof(dst)));
 
-    pinfo->ipLen      = IPH_MIN_LEN;
-    pinfo->ipProto    = iph.ipProto;
-    skb->realData    += pinfo->ipLen;
-    skb->realDataLen -= pinfo->ipLen;
-    return IP_Try_Dissect(skb, pinfo);
-
-#undef IPH_MIN_LEN
+    return;
 }
 
-int dissect_IPv6(frameTableTypeDef *frameTable)
+static void Print_Frame_IPv6(frameTableTypeDef *frameTable)
 {
-    /* FIXME */
-    return SECERR_OK;
+    return;
 }
 
-int Dissect_IP(frameTableTypeDef *frameTable)
+static void Print_Frame_IP(frameTableTypeDef *frameTable)
 {
-    uint8_t version;
-    int ret = SECERR_INVAL;
-
-    version = *skb->realData >> 4;
-    switch (version) {
+    switch (Frame_IP_Ver(frameTable)) {
     case 4:
-        ret = dissect_IPv4(skb, pinfo);
+        Print_Frame_IPv4(frameTable);
         break;
     case 6:
-        ret = dissect_IPv6(skb, pinfo);
+        Print_Frame_IPv6(frameTable);
         break;
     default:
-        printf("Bogus IP version (%u)", version);
+        printf("Bogus IP version\n");
         break;
     }
-    return ret;
+
+    return;
 }
 
-int Dissect_Ethernet(frameTableTypeDef *frameTable)
+static void Print_Frame_Eth(frameTableTypeDef *frameTable)
 {
-    /* Minimum ETH header length. */
-#define ETHH_MIN_LEN             14
+    uint8_t src[32];
+    uint8_t dst[32];
 
-    uint8_t srcStr[32];
-    uint8_t dstStr[32];
+    TVBuffTypeDef tvb;
     Eth_HDRTypeDef eHDR;
 
-    setAddress(&eHDR.dst, AT_ETHER, 6, skb->realData);
-    setAddress(&eHDR.src, AT_ETHER, 6, skb->realData + 6);
-    eHDR.type = ntoh16(skb->realData + 12);
+    tvb.realData    = frameTable->frame[0].eth.hdr;
+    tvb.realDataLen = frameTable->frame[0].eth.hdrLen;
+
+    setAddress(&eHDR.dst, AT_ETHER, 6, fastEnsureContiguous(&tvb, 0, 6));
+    setAddress(&eHDR.src, AT_ETHER, 6, fastEnsureContiguous(&tvb, 6, 6));
+    eHDR.type = TVB_Get_ntohs(&tvb, 12);
 
     printf("    Ethernet II, Src: %s, Dst: %s\n"
            "      Type: %s (0x%04x)\n",
-           Ethernet_TOStr(&eHDR.src, srcStr, sizeof(srcStr)),
-           Ethernet_TOStr(&eHDR.dst, dstStr, sizeof(dstStr)),
+           Ether_TOStr(&eHDR.src, src, sizeof(src)),
+           Ether_TOStr(&eHDR.dst, dst, sizeof(dst)),
            Val_To_StrConst(eHDR.type, EtypeVals, "Unknown"), eHDR.type);
-
-    pinfo->ethLen     = ETHH_MIN_LEN;
-    skb->realData    += pinfo->ethLen;
-    skb->realDataLen -= pinfo->ethLen;
-    return Dissect_IP(skb, pinfo);
-
-#undef ETHH_MIN_LEN
+    return;
 }
+
+static void Print_Frame(frameTableTypeDef *frameTable)
+{
+    printf("  Frame: %u bytes on wire \n", frameTable->containedLen);
+
+    Print_Frame_Eth(frameTable);
+    Print_Frame_IP(frameTable);
+    Print_Frame_ESP(frameTable);
+    return;
+}
+#else
+__STATIC_FORCEINLINE
+void Print_Frame(frameTableTypeDef *frameTable)
+{
+    return;
+}
+#endif
 
 int Dissect_Frame(frameTableTypeDef *frameTable)
 {
-    printf("  Frame: %u bytes on wire \n", skb->dataLen);
+    int nents = 0;
+    frameTypeDef *frame;
+    stateTypeDef state = s_eth_hdr;
 
-    skb->realData    = skb->data;
-    skb->realDataLen = skb->dataLen;
-    return Dissect_Ethernet(skb, pinfo);
-}
-#else
+    frame = SUBSET_REMAINING(nents++, 0);
 
-__STATIC_FORCEINLINE
-int Dissect_ESP(frameTableTypeDef *frameTable)
-{
-#if 0
-    /* get esp info */
-    pinfo->espBufLen     = skb->dataLen - pinfo->ethLen - pinfo->ipLen;
-    pinfo->espHdrLen     = 8;
-    pinfo->espIVLen      = 8;
-    pinfo->espTrailerLen = 2;
-    /* The ICV consists solely of the AES-GCM Authentication Tag.
-    Implementations MUST support a full-length 16-octet ICV, and MAY
-    support 8 or 12 octet ICVs, and MUST NOT support other ICV lengths. */
-    pinfo->espICVLen     = 16;
-    pinfo->espPayloadLen = pinfo->espBufLen -
-                           pinfo->espHdrLen -
-                           pinfo->espIVLen -
-                           pinfo->espICVLen;
-    pinfo->espBuf        = skb->data    + pinfo->ethLen + pinfo->ipLen;
-    pinfo->espHdr        = pinfo->espBuf;
-    pinfo->espIV         = pinfo->espHdr + pinfo->espHdrLen;
-    pinfo->espPayload    = pinfo->espBuf +
-                           pinfo->espHdrLen +
-                           pinfo->espIVLen;
-    pinfo->espTrailer    = pinfo->espBuf +
-                           pinfo->espHdrLen +
-                           pinfo->espIVLen +
-                           (pinfo->espPayloadLen - pinfo->espTrailerLen);
-    pinfo->espICV        = pinfo->espBuf +
-                           pinfo->espHdrLen +
-                           pinfo->espIVLen +
-                           pinfo->espPayloadLen;
+redissect:
+    switch (CURRENT_STATE()) {
+    case s_eth_hdr:
+        frame->eth.hdr    = frame->data;
+        frame->eth.hdrLen = ETH_HEADER_SIZE;
+        OFFSET(ETH_HEADER_SIZE);
 
-    pinfo->ipProto = *(pinfo->espTrailer + 1); /* get Next Header */
-#endif
-    uint64_t cycles_start, cycles_end;
-    uint32_t segs_total_len;
-    MSG_DECMsgTypeDef *dec = (MSG_DECMsgTypeDef *)(skb->opaque + MSG_HEADER);
-    uint32_t seg_len, i;
-    uint8_t *espPayload;
-    uint32_t espPayloadLen;
-    uint32_t state = s_Hdr;
-    uint32_t offset_len;
-    segs_total_len = GET_FIELD(dec->desc->desc6, 16, 0xffff);
-
-    for (;;) {
-        switch(state)
-        {
-            case s_Hdr:
-                /* frameTable->frame[0].esp.espBufLen = frameTable->frame[0].origDataLen - frameTable->frame[0].eth.ethLen - frameTable->frame[0].ip.ipLen; */
-                frameTable->frame[0].esp.espHdrLen = 8;
-                frameTable->frame[0].esp.espIVLen = 8;
-                frameTable->frame[0].esp.espHdr = frameTable->frame[0].origData + frameTable->frame[0].eth.ethLen + frameTable->frame[0].ip.ipLen;
-                espPayloadLen = segs_total_len -
-                                frameTable->frame[0].eth.ethLen -
-                                frameTable->frame[0].ip.ipLen -
-                                frameTable->frame[0].esp.espHdrLen -
-                                frameTable->frame[0].esp.espIVLen -
-                                frameTable->frame[0].esp.espICVLen;
-                offset_len = frameTable->frame[0].eth.ethLen +
-                             frameTable->frame[0].ip.ipLen +
-                             frameTable->frame[0].esp.espHdrLen +
-                             frameTable->frame[0].esp.espIVLen;
-                /* segs_total_len -= (frameTable->frame[0].eth.ethLen + */
-                /*                    frameTable->frame[0].ip.ipLen + */
-                /*                    frameTable->frame[0].esp.espHdrLen + */
-                /*                    frameTable->frame[0].esp.espIVLen); */
-                state = s_EspPayload;
-                continue;
-            case s_EspPayload:
-                for (i = 0; i < frameTable->origNents; ++i) {
-                    if(segs_total_len <= frameTable->frame[i].origDataLen) {
-                        frameTable->frame[i].esp.espPayload = frameTable->frame[i].origData + offset_len;
-                        frameTable->frame[i].esp.espPayloadLen = espPayloadLen; /* consider change */
-                        state = s_EspTrailer;
-                        continue;
-                    }
-                    else
-                    {
-                        frameTable->frame[i].esp.espPayload = frameTable->frame[i].origData + offset_len;
-                        frameTable->frame[i].esp.espPayloadLen = espPayloadLen;
-                        segs_total_len -= frameTable->frame[i].origDataLen;
-                        espPayloadLen -
-                    }
-                }
-                continue;
-            case s_EspTrailer:
-
-                continue;
-            case s_EspICV:
-
-                continue;
+    case s_ip_hdr:
+        switch (*(frame->data) >> 4) {
+        case 4:
+            frame->ip.hdr    = frame->data;
+            frame->ip.hdrLen = IPH_MIN_LEN;
+            OFFSET(IPH_MIN_LEN);
+            break;
+        case 6:
+            break;
+        default:
+            printf("Bogus IP version\n");
+            RETURN(SECERR_INVAL);
         }
-        /* if(frameTable->frame[i].origDataLen < segs_total_len) { */
-        /*     continue; */
-        /* } */
+
+    case s_esp_hdr:
+        frame->esp.hdr    = frame->data;
+        frame->esp.hdrLen = ESP_HEADER_SIZE;
+        OFFSET(ESP_HEADER_SIZE);
+
+    case s_esp_iv:
+        frame->esp.iv    = frame->data;
+        frame->esp.ivLen = ESP_IV_SIZE;
+        OFFSET(ESP_IV_SIZE);
+        frame->reportedLen = frameTable->containedLen -
+                             frame->eth.hdrLen -
+                             frame->ip.hdrLen -
+                             frame->esp.hdrLen -
+                             frame->esp.ivLen -
+                             ESP_TRAILER_SIZE -
+                             ESP_ICV_SIZE;
+        UPDATE_STATE(s_esp_payload);
+
+    case s_esp_payload:
+        if (frame->dataLen < frame->reportedLen) {
+            frame->esp.payload    = frame->data;
+            frame->esp.payloadLen = frame->dataLen;
+            frame = SUBSET_REMAINING(nents++,
+                                     frame->reportedLen - frame->dataLen);
+            REDISSECT();
+        } else {
+            STRICT_CHECK(frame->dataLen < frame->reportedLen);
+            frame->esp.payload    = frame->data;
+            frame->esp.payloadLen = frame->dataLen;
+            OFFSET(frame->esp.payloadLen);
+            frame->reportedLen = ESP_TRAILER_SIZE;
+            UPDATE_STATE(s_esp_trailer);
+        }
+
+    case s_esp_trailer:
+        if (frame->dataLen < frame->reportedLen) {
+            frame->esp.trailer    = frame->data;
+            frame->esp.trailerLen = frame->dataLen;
+            frame = SUBSET_REMAINING(nents++,
+                                     frame->reportedLen - frame->dataLen);
+            REDISSECT();
+        } else {
+            STRICT_CHECK(frame->dataLen < frame->reportedLen);
+            frame->esp.trailer    = frame->data;
+            frame->esp.trailerLen = frame->dataLen;
+            OFFSET(frame->esp.trailerLen);
+            frame->reportedLen = ESP_ICV_SIZE;
+            UPDATE_STATE(s_esp_icv);
+        }
+
+    case s_esp_icv:
+        if (frame->dataLen < frame->reportedLen) {
+            frame->esp.icv    = frame->data;
+            frame->esp.icvLen = frame->dataLen;
+            frame = SUBSET_REMAINING(nents++,
+                                     frame->reportedLen - frame->dataLen);
+            REDISSECT();
+        } else {
+            STRICT_CHECK(frame->dataLen < frame->reportedLen);
+            frame->esp.icv    = frame->data;
+            frame->esp.icvLen = frame->dataLen;
+        }
+
+    default:
+        break;
     }
-    /* pinfo->ipProto = *(pinfo->espTrailer + 1); /\* get Next Header *\/ */
+
+    Print_Frame(frameTable);
     return SECERR_OK;
 }
 
-__STATIC_FORCEINLINE
-int IP_Try_Dissect(frameTableTypeDef *frameTable)
-{
-    int ret = SECERR_INVAL;
-
-    switch (frameTable->frame[0].ip.ipProto) {
-    case IP_PROTO_ESP:
-        ret = Dissect_ESP(frameTable);
-        break;
-    default:
-        printf("Bogus IP proto \n");
-        break;
-    }
-
-    return ret;
-}
-
-#if 0
-int Dissect_Frame(frameTableTypeDef *frameTable)
-{
-    int ret = SECERR_INVAL;
-
-    frameTable->frame[0].ethLen = 14; /* Minimum ETH header length. */
-
-    /* IP version(v4 or v6) */
-    switch (*(frameTable->frame[0].origData  + frameTable->frame[0].eth.ethLen) >> 4) {
-    case 4:
-        frameTable->frame[0].eth.addressType = AT_IPv4;
-        frameTable->frame[0].ip.ipLen       = 20; /* Minimum IP header length. */
-        frameTable->frame[0].eth.dst[0]      = ntoh32(frameTable->frame[0].origData + frameTable->frame[0].eth.ethLen + IPH_DST);
-        frameTable->frame[0].ip.ipProto     = *(frameTable->frame[0].origData + frameTable->frame[0].eth.ethLen + IPH_P);
-        ret = IP_Try_Dissect(frameTable);
-        break;
-    case 6:
-        /* FIXME */
-        frameTable->frame[0].eth.addressType = AT_IPv6;
-        break;
-    default:
-        printf("Bogus IP version \n");
-        break;
-    }
-
-    return ret;
-}
-#endif
-
-/* unsigned int Esp_Packets_Totalen; */
-int Dissect_FrameTable(frameTableTypeDef *frameTable)
-{
-    uint32_t i;
-    int ret = SECERR_INVAL;
-    Esp_State state = s_Eth;
-    frameTypeDef *frame;
-    unsigned int expectEspPayloadLen;
-    unsigned int expectEspTrailerLen;
-    unsigned int expectEspICVLen;
-
-    unsigned int origDataLenRoom;
-
-    for (i = 0; i < frameTable->nents; ++i) {
-        frame = &frameTable->frame[i];
-        origDataLenLeft = frame->origDataLen;
-  repeat:
-        switch(state)
-        {
-            case s_EthHdr:
-                frame->eth.ethLen = 14;
-                origDataLenLeft -= frame->eth.ethLen;
-                state = s_Ip;
-                break;
-            case s_IpHdr:
-                frame->ip.ipLen = 20;
-                origDataLenLeft -= frame->ip.ipLen;
-                state = s_Hdr;
-                break;
-            case s_EspHdr:
-                frame->esp.espHdrLen = 8;
-                frame->esp.espIVLen = 8;
-                frame->esp.espICVLen = 16;
-                frame->esp.espTrailerLen = 2;
-                frame->esp.espHdr = frame->origData + frame->eth.ethLen + frame->ip.ipLen;
-                espPayloadLen = frameTable->origNents -
-                                frame->eth.ethLen -
-                                frame->ip.ipLen -
-                                frame->esp.espHdrLen -
-                                frame->esp.espIVLen -
-                                frame->esp.espTrailerLen -
-                                frame->esp.espICVLen;
-                espTrailerLen = frame->esp.espTrailerLen;
-                espICVLen = frame->esp.espICVLen;
-                origDataLenLeft -= (frame->esp.espHdrLen + frame->esp.espIVLen);
-                state = s_EspPayload;
-                break;
-            case s_EspPayload:
-                if(origDataLenLeft < espPayloadLen) {  /* use switch(origDataLenLeft < espPayloadLen) can be good*/
-                    frame->esp.espPayload = frame->origData +
-                                            (frame->origDataLen - origDataLenLeft);
-                    frame->esp.espPayloadLen = origDataLenLeft;
-                    espPayloadLen -= origDataLenLeft;
-                } else  {
-                    frame->esp.espPayload = frame->origData +
-                                            (frame->origDataLen - origDataLenLeft);
-                    frame->esp.espPayloadLen = espPayloadLen;
-                    origDataLenLeft -= espPayloadLen;
-                    state = s_EspTrailer;
-                }
-                break;
-            case s_EspTrailer:
-                if(origDataLenLeft < espTrailerLen) {  /* use switch(origDataLenLeft < espPayloadLen) can be good*/
-                    frame->esp.espTrailer = frame->origData +
-                                            (frame->origDataLen - origDataLenLeft);
-                    frame->esp.espTrailerLen = origDataLenLeft;
-                    espTrailerLen -= origDataLenLeft;
-                } else if(origDataLenLeft >= espTrailerLen) {
-                    frame->esp.espTrailer = frame->origData +
-                                            (frame->origDataLen - origDataLenLeft);
-                    frame->esp.espTrailerLen = espTrailerLen;
-                    origDataLenLeft -= espTrailerLen;
-                    state = s_EspICV;
-                }
-                break;
-            case s_EspICV:
-                if(origDataLenLeft < espICVLen) {  /* use switch(origDataLenLeft < espPayloadLen) can be good*/
-                    frame->esp.espICV = frame->origData +
-                                            (frame->origDataLen - origDataLenLeft);
-                    frame->esp.espICVLen = origDataLenLeft;
-                    espICVLen -= origDataLenLeft;
-                } else if(origDataLenLeft >= espICVLen) {
-                    frame->esp.espICV = frame->origData +
-                                            (frame->origDataLen - origDataLenLeft);
-                    frame->esp.espICVLen = espICV;
-                    origDataLenLeft -= espICVLen;
-                    break;
-                }
-                break;
-            default:
-                break;
-            }
-    }
-}
-
-#endif

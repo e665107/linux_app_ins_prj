@@ -1,4 +1,4 @@
--#ifndef __MSG_H
+#ifndef __MSG_H
 #define __MSG_H
 
 #include "nic.h"
@@ -48,9 +48,7 @@ typedef struct
     uint32_t gmac;
     uint32_t qid;
     uint32_t segs;
-    NIC                        frameTable->frame[i].esp.espPayload = frameTable->frame[i].origData + offset_len;
-                        frameTable->frame[i].esp.espPayloadLen = espPayloadLen;
-_RXDescTypeDef *desc;
+    NIC_RXDescTypeDef *desc;
 } MSG_DECMsgTypeDef;
 
 typedef struct
