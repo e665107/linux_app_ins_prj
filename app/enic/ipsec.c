@@ -523,7 +523,11 @@ void ESP_TRANSPORT(frameTableTypeDef *frameTable, void *sa)
     bufList.buffers[0].data    = pinfo->espPayload;
     bufList.buffers[0].dataLen = pinfo->espPayloadLen;
 #endif
-    bufList.numBuffers = pinfo->segs;  /* consider change */
+    bufList.numBuffers = pinfo->segs;
+    for (i = 0; i < bufList.numBuffers; i++) {
+            bufList.buffers[i].data    = pinfo->espPayload[i];
+            bufList.buffers[i].dataLen = pinfo->espPayloadLen[i];
+    }
 
     sg_copy_buffer(frameTable, &bufList);
 #if 0

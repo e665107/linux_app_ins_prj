@@ -9,5 +9,5 @@ Makefile
 .*~
 main/app_config.h.in~
 main/app_config.h
-.tags
 *.*~
+.tags

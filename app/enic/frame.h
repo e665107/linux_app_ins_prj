@@ -27,7 +27,14 @@ enum
 #define IPH_SRC             12
 #define IPH_DST             16
 
-typedef struct {
+typedef struct
+{
+    uint32_t segs;
+    uint32_t direction;
+    uint32_t addressType;
+    uint32_t ethLen;
+    uint32_t ipProto;
+    uint32_t ipLen;
     uint32_t dst[4];
     uint32_t src[4];
     uint16_t addressType;
@@ -55,7 +62,7 @@ typedef struct {
     uint8_t *espIV;
     uint32_t espIVLen;
     uint8_t *espPayload;
-    uint32_t espPayloadLen;
+    uint32_t espPayloadLen[8];
     uint8_t *espTrailer;
     uint32_t espTrailerLen;
     uint8_t *espICV;
