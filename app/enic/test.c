@@ -23,6 +23,24 @@ unsigned char skbuf[] = {
     0xc0, 0x62,
 };
 
+unsigned char skbuf_rx[] = {
+    0xe2, 0x72, 0xc1, 0x2b, 0x87, 0xe5, 0xd2, 0xf9,
+    0x79, 0xf8, 0x82, 0xa1, 0x08, 0x00, 0x45, 0x00,
+    0x00, 0x64, 0x00, 0x00, 0x40, 0x00, 0x40, 0x32,
+    0x26, 0x66, 0x0a, 0x00, 0x00, 0x01, 0x0a, 0x00,
+    0x00, 0x02, 0x00, 0x00, 0x10, 0x01, 0x00, 0x00,
+    0x00, 0x01, 0x1e, 0xd0, 0xa0, 0xe2, 0x3d, 0x4a,
+    0xbd, 0x34, 0x2c, 0xdf, 0xe4, 0x49, 0xbd, 0x92,
+    0x7a, 0xa2, 0x2d, 0x94, 0xf7, 0xf4, 0x5f, 0x11,
+    0x31, 0xea, 0xdd, 0x79, 0x92, 0xd3, 0x54, 0x71,
+    0x7d, 0x5f, 0x7d, 0xec, 0xee, 0x02, 0xa9, 0x5a,
+    0x5d, 0x14, 0x39, 0x36, 0x83, 0x9f, 0xb3, 0x44,
+    0x52, 0x73, 0xa0, 0xb1, 0xe2, 0x06, 0x45, 0x19,
+    0x06, 0x2c, 0x18, 0x06, 0x59, 0xce, 0x98, 0x4a,
+    0x57, 0x78, 0x28, 0xca, 0x84, 0x42, 0xa2, 0xe1,
+    0xdd, 0x4a, 0xaa, 0xbb, 0xcc, 0xdd
+};
+
 struct SA_TX_TestCase {
     int type;
     uint32_t saInd;
@@ -59,7 +77,7 @@ struct SA_RX_TestCase {
         .spi       = 0x00001000,
         .ip        = IP,
         .key       = K,
-        .salt      = 0xdeadbeef,
+        .salt      = 0xffeeddcc,
         .iptblInd  = 0,
     },
     {
@@ -99,10 +117,17 @@ struct ENC_TestCase {
     { 0 }
 };
 
+typedef struct{
+    uint32_t seg_len;
+    unsigned char *seg_buf;
+}String_TypeDef;
+
 struct DEC_TestCase {
     int type;
     unsigned char *plaintext;
     uint32_t psize;
+    uint32_t segs;
+    String_TypeDef segment[6];
     uint32_t l2Len;
     uint32_t l3Len;
     uint32_t l4Len;
@@ -110,10 +135,18 @@ struct DEC_TestCase {
     uint32_t saInd;
     uint32_t espLen;
 } DEC_TestCases[] = {
+#if 0
     {
         .type      = MSG_DEC,
         .plaintext = skbuf_rx,
-        .psize     = sizeof(skbuf_rx),
+        .psize     = sizeof(skbuf_rx) - 4,
+        .segs      = 1,
+        .segment = {
+            {
+                .seg_len = sizeof(skbuf_rx),
+                .seg_buf = skbuf_rx,
+            },
+        },
         .l2Len     = 14,
         .l3Len     = 20,
         .l4Len     = 80,
@@ -121,14 +154,104 @@ struct DEC_TestCase {
         .saInd     = 0,
         .espLen    = 18,
     },
-    { 0 }
+#endif
+#if 0
+    {
+        .type      = MSG_DEC,
+        .plaintext = skbuf_rx,
+        .psize     = sizeof(skbuf_rx) - 4,
+        .segs      = 2,
+        .segment = {
+            {
+                .seg_len = 112,
+                .seg_buf = skbuf_rx,
+            },
+            {
+                .seg_len = sizeof(skbuf_rx) - 112,
+                .seg_buf = skbuf_rx + 112,
+            }
+        },
+        .l2Len     = 14,
+        .l3Len     = 20,
+        .l4Len     = 80,
+        .tcpCksum  = true,
+        .saInd     = 0,
+        .espLen    = 18,
+    },
+#endif
+#if 0
+    {
+        .type      = MSG_DEC,
+        .plaintext = skbuf_rx,
+        .psize     = sizeof(skbuf_rx) - 4,
+        .segs      = 3,
+        .segment = {
+            {
+                .seg_len = 50,
+                .seg_buf = skbuf_rx,
+            },
+            {
+                .seg_len = 50,
+                .seg_buf = skbuf_rx + 50,
+            },
+            {
+                .seg_len = sizeof(skbuf_rx) - 100,
+                .seg_buf = skbuf_rx + 100,
+            },
+        },
+        .l2Len     = 14,
+        .l3Len     = 20,
+        .l4Len     = 80,
+        .tcpCksum  = true,
+        .saInd     = 0,
+        .espLen    = 18,
+    },
+#endif
+#if 1
+    {
+        .type      = MSG_DEC,
+        .plaintext = skbuf_rx,
+        .psize     = sizeof(skbuf_rx) - 4,
+        .segs      = 6,
+        .segment = {
+            {
+                .seg_len = 50,
+                .seg_buf = skbuf_rx,
+            },
+            {
+                .seg_len = 10,
+                .seg_buf = skbuf_rx + 50,
+            },
+            {
+                .seg_len = 10,
+                .seg_buf = skbuf_rx + 60,
+            },
+            {
+                .seg_len = 10,
+                .seg_buf = skbuf_rx + 70,
+            },
+            {
+                .seg_len = 25,
+                .seg_buf = skbuf_rx + 80,
+            },
+            {
+                .seg_len = sizeof(skbuf_rx) - 105,
+                .seg_buf = skbuf_rx + 105,
+            },
+        },
+        .l2Len     = 14,
+        .l3Len     = 20,
+        .l4Len     = 80,
+        .tcpCksum  = true,
+        .saInd     = 0,
+        .espLen    = 18,
+    }
+#endif
 };
-
-
 
 MSG_TypeDef gMSG;
 TX_DescTypeDef txDesc;
-
+NIC_RXDescTypeDef rxDesc[6];
 void sample_SATest(void)
 {
     int i;
@@ -193,29 +316,66 @@ void sample_EncTest(void)
     return;
 }
 
+#if 1
 void sample_DecTest(void)
 {
-    int i;
-    const struct SA_RX_TestCase *t1;
-    memset(&gMSG, 0, sizeof(MSG_TypeDef));
-    gMSG.type = t1->type;
-    gMSG.u.rxsa_msg.sa_ind = t1->saInd;
-    gMSG.u.rxsa_msg.spi = t1->spi;
-    for (i = 0; i < 4; i++)
-        gMSG.u.rxsa_msg.ipaddr[i] = t1->ip[3 - i];
-    for (i = 0; i < 4; i++)
-        gMSG.u.rxsa_msg.key[i] = t1->key[3 - i];
-    gMSG.u.rxsa_msg.salt = t1->salt;
-    gMSG.u.rxsa_msg.iptbl_ind = t2->iptblInd;
+    uint32_t i;
+    const struct DEC_TestCase *t;
+    NIC_RXDescTypeDef *desc;
+    for (t = DEC_TestCases; t->type; t++) {
+        memset(&gMSG, 0, sizeof(MSG_TypeDef));
+        SET_FIELD(rxDesc[0].desc6, t->psize, 16, 0xffff);  /* set rx buf size */
+        gMSG.u.dec_msg.segs = t->segs;
+        gMSG.type = t->type;
 
-    IPSec_Loop((intptr_t)&gMSG);
-    gMSG.type = ;
+        for (i = 0; i < t->segs - 1; ++i) {
+            rxDesc[i].desc11 = (intptr_t)(&rxDesc[i+1]);
+        }
 
+        for (i = 0; i < t->segs; ++i) {
+            SET_FIELD(rxDesc[i].desc0, t->segment[i].seg_len, 0, 0x1ffff);  /* set rx seg size */
+            rxDesc[i].desc9 = (intptr_t)t->segment[i].seg_buf;
+        }
+
+        gMSG.u.dec_msg.desc = (NIC_RXDescTypeDef * )rxDesc;
+        printf("Dec msg segs:%d\n", t->segs);
+        IPSec_Loop((intptr_t)&gMSG);
+    }
 }
+#endif
+
+#if 0
+void sample_DecTest(void)
+{
+    uint32_t i;
+    const struct DEC_TestCase *t;
+
+    for (t = DEC_TestCases; t->type; t++) {
+        NIC_RXDescTypeDef *desc = rxDesc;
+
+        memset(&gMSG, 0, sizeof(MSG_TypeDef));
+        SET_FIELD(rxDesc[0].desc6, t->psize, 16, 0xffff);  /* set rx buf size */
+        gMSG.u.dec_msg.segs = t->segs;
+        gMSG.type = t->type;
+
+        desc[0].desc11 = (intptr_t)(desc + 1);
+
+        for (i = 0; i < t->segs; i++) {
+            SET_FIELD(desc[i].desc0, t->segment[i].seg_len, 0, 0x1ffff);
+            desc[i].desc9 = (intptr_t)t->segment[i].seg_buf;
+            desc[i].desc11 = (intptr_t)(desc + 1);
+        }
+
+        gMSG.u.dec_msg.desc = (NIC_RXDescTypeDef *)desc;
+        IPSec_Loop((intptr_t)&gMSG);
+    }
+}
+#endif
 void sampleTest(void)
 {
-    sample_SATest();
-    sample_EncTest();
+    /* sample_SATest(); */
+    /* sample_EncTest(); */
+    sample_DecTest();
     return;
 }
 

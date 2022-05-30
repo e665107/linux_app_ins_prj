@@ -32,7 +32,7 @@ typedef enum {
 # define STRICT_CHECK(COND)                                                    \
     do {                                                                       \
         if (COND) {                                                            \
-            printf("Frame Unknown: Invalid length/type\n");                    \
+            printf("Frame Unknown: Invalid length/type, %d\n", __LINE__);        \
             RETURN(SECERR_INVAL);                                              \
         }                                                                      \
     } while (0)
@@ -40,10 +40,10 @@ typedef enum {
 # define STRICT_CHECK(COND)
 #endif
 
-#define SUBSET_REMAINING(N, R)                                                 \
+#define SUBSET_REMAINING(R)                                                 \
     ({                                                                         \
-        STRICT_CHECK(N > frameTable->nents);                                   \
-        frameTypeDef *__frame = &frameTable->frame[N];                         \
+        STRICT_CHECK(nents > frameTable->nents);                                   \
+        frameTypeDef *__frame = &frameTable->frame[nents++];                         \
         __frame->reportedLen = R;                                              \
         __frame;                                                               \
     })
@@ -554,8 +554,64 @@ UINT_Bits_Format_Value(TVBuffTypeDef *tvb,
     return Add_Bits_Format_Value(tvb, bit_offset, no_of_bits, dst);
 }
 
+
 static void Print_Frame_ESP(frameTableTypeDef *frameTable)
 {
+#if 0
+    switch (pinfo->direction) {
+    case INBOUND: {
+        uint32_t spi = 0;
+        uint32_t sequenceNumber;
+
+        spi                   = ntoh32(pinfo->espHdr);
+        sequenceNumber        = ntoh32(pinfo->espHdr + 4);
+
+        printf("    Encapsulating Security Payload \n"
+               "      ESP SPI: 0x%08x (%u) \n"
+               "      ESP Sequence: %u \n",
+               spi, spi,
+               sequenceNumber);
+    }
+    break;
+    case OUTBOUND: {
+        uint64_t iv;
+        uint32_t spi = 0;
+        uint32_t sequenceNumber;
+        uint8_t esp_Pad_Len;
+        uint8_t encapsulated_Protocol;
+
+        spi                   = ntoh32(pinfo->espHdr);
+        sequenceNumber        = ntoh32(pinfo->espHdr + 4);
+        iv                    = ntoh64(pinfo->espIV);
+        esp_Pad_Len           = *pinfo->espTrailer;
+        encapsulated_Protocol = *(pinfo->espTrailer + 1);
+
+        printf("    Encapsulating Security Payload \n"
+               "      ESP SPI: 0x%08x (%u) \n"
+               "      ESP Sequence: %u \n"
+               "      ESP IV: %016lx \n"
+               "      ESP Pad Length: %u \n"
+               "      Next header: %s (0x%02x) \n",
+               spi, spi,
+               sequenceNumber,
+               iv,
+               esp_Pad_Len,
+               Val_To_StrConst(encapsulated_Protocol, IPProtoVals, "Unknown"),
+               encapsulated_Protocol);
+
+        pinfo->ipProto   = encapsulated_Protocol; /* get Next Header */
+        skb->realData    = pinfo->espPayload;
+        skb->realDataLen = pinfo->espPayloadLen -
+                           esp_Pad_Len -
+                           pinfo->espTrailerLen;
+
+        ret = IP_Try_Dissect(skb, pinfo);
+    }
+    break;
+#endif
+
+
+
     return;
 }
 
@@ -675,9 +731,34 @@ static void Print_Frame(frameTableTypeDef *frameTable)
     Print_Frame_ESP(frameTable);
     return;
 }
+
+static void Dump_Frame(frameTableTypeDef *frameTable)
+{
+    uint32_t i;
+
+    printf("  Frame total bytes: %u  \n", frameTable->containedLen);
+
+    for (i = 0; i < frameTable->nents; ++i) {
+        printf("  Frame total bytes: %u  \n",
+
+
+
+               frameTable->containedLen);
+
+
+    }
+
+    return;
+}
 #else
 __STATIC_FORCEINLINE
 void Print_Frame(frameTableTypeDef *frameTable)
+{
+    return;
+}
+
+__STATIC_FORCEINLINE
+void Dump_Frame(frameTableTypeDef *frameTable)
 {
     return;
 }
@@ -689,7 +770,7 @@ int Dissect_Frame(frameTableTypeDef *frameTable)
     frameTypeDef *frame;
     stateTypeDef state = s_eth_hdr;
 
-    frame = SUBSET_REMAINING(nents++, 0);
+    frame = SUBSET_REMAINING(0);
 
 redissect:
     switch (CURRENT_STATE()) {
@@ -734,29 +815,28 @@ redissect:
         if (frame->dataLen < frame->reportedLen) {
             frame->esp.payload    = frame->data;
             frame->esp.payloadLen = frame->dataLen;
-            frame = SUBSET_REMAINING(nents++,
-                                     frame->reportedLen - frame->dataLen);
+            frame = SUBSET_REMAINING(frame->reportedLen - frame->dataLen);
             REDISSECT();
         } else {
             STRICT_CHECK(frame->dataLen < frame->reportedLen);
             frame->esp.payload    = frame->data;
-            frame->esp.payloadLen = frame->dataLen;
+            frame->esp.payloadLen = frame->reportedLen;
             OFFSET(frame->esp.payloadLen);
             frame->reportedLen = ESP_TRAILER_SIZE;
             UPDATE_STATE(s_esp_trailer);
         }
+        printf("%s:%d,frame->reportedLen:%d, frame->dataLen:%d\n", __func__, __LINE__, frame->reportedLen, frame->dataLen);
 
     case s_esp_trailer:
         if (frame->dataLen < frame->reportedLen) {
             frame->esp.trailer    = frame->data;
             frame->esp.trailerLen = frame->dataLen;
-            frame = SUBSET_REMAINING(nents++,
-                                     frame->reportedLen - frame->dataLen);
+            frame = SUBSET_REMAINING(frame->reportedLen - frame->dataLen);
             REDISSECT();
         } else {
             STRICT_CHECK(frame->dataLen < frame->reportedLen);
             frame->esp.trailer    = frame->data;
-            frame->esp.trailerLen = frame->dataLen;
+            frame->esp.trailerLen = frame->reportedLen;
             OFFSET(frame->esp.trailerLen);
             frame->reportedLen = ESP_ICV_SIZE;
             UPDATE_STATE(s_esp_icv);
@@ -766,13 +846,12 @@ redissect:
         if (frame->dataLen < frame->reportedLen) {
             frame->esp.icv    = frame->data;
             frame->esp.icvLen = frame->dataLen;
-            frame = SUBSET_REMAINING(nents++,
-                                     frame->reportedLen - frame->dataLen);
+            frame = SUBSET_REMAINING(frame->reportedLen - frame->dataLen);
             REDISSECT();
         } else {
             STRICT_CHECK(frame->dataLen < frame->reportedLen);
             frame->esp.icv    = frame->data;
-            frame->esp.icvLen = frame->dataLen;
+            frame->esp.icvLen = frame->reportedLen;
         }
 
     default:
@@ -782,4 +861,3 @@ redissect:
     Print_Frame(frameTable);
     return SECERR_OK;
 }
-

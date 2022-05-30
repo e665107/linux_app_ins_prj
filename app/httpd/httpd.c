@@ -345,7 +345,7 @@ int get_line(int sock, char *buf, int size)
     int i = 0;
     char c = '\0';
     int n;
- 
+
     while ((i < size - 1) && (c != '\n'))
     {
         n = recv(sock, &c, 1, 0);
@@ -526,7 +526,7 @@ void unimplemented(int client)
 int httpd_ins(void)
 {
     int server_sock = -1;
-    u_short port = 0;
+    u_short port = 40000;
     int client_sock = -1;
     struct sockaddr_in client_name;
     int client_name_len = sizeof(client_name);
@@ -544,13 +544,10 @@ int httpd_ins(void)
             error_die("accept");
 
         /* accept_request(client_sock); */
-        if (pthread_create(&newthread, NULL, accept_request, client_sock) != 0)
+        if (pthread_create(&newthread, NULL, (void *)accept_request, (void *) &client_sock) != 0)
             perror("pthread_create");
     }
 
     close(server_sock);
     return (0);
 }
-
-
-

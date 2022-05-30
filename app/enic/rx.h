@@ -16,7 +16,7 @@ typedef struct {
     uint32_t desc8;  /* ipsec err indicate */
     uint64_t desc9;  /* buffer in ram */
     uint32_t desc10; /* dest list header */
-    uint32_t desc11; /* pointer to next shadow descriptor */
+    uint64_t desc11; /* pointer to next shadow descriptor */
 } NIC_RXDescTypeDef;
 
 
