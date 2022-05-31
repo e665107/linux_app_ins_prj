@@ -369,8 +369,61 @@ void IPSec_CallbackFn(intptr_t callbackTag,
  *       For ESP encryption and authentication: AES-128-GCM (128-bit key)
  */
 __STATIC_FORCEINLINE
-void ESP_TRANSPORT(frameTableTypeDef *ftable)
+void ESP_TRANSPORT(frameTableTypeDef *ftable, void *sa, int direction)
 {
+    const uint32_t *key;
+    const uint32_t *salt;
+    uint32_t i;
+    BufferListTypedef bufList;
+    CY_Sym_OpDataTypedef opData;
+
+    if (__rv_unlikely(NULL == sa)) {
+        printf("bad state \n");
+        return;
+    }
+
+    switch (direction) {
+        case INBOUND: {      /* decryption */
+            RX_SATypedef *rsa = (RX_SATypedef *)sa;
+
+            key = rsa->key;
+            salt = &rsa->salt;
+            opData.direction   = INBOUND;
+        }
+            break;
+        case OUTBOUND: {     /* encryption */
+            TX_SATypedef *tsa = (TX_SATypedef *)sa;
+
+            key = tsa->key;
+            salt = &tsa->salt;
+            opData.direction   = OUTBOUND;
+        }
+            break;
+    }
+
+    /* aad */
+    opData.aad       = pinfo->espHdr;/* not change */
+    opData.aadLen    = pinfo->espHdrLen;/* not change */
+    /* digest */
+    opData.digest    = pinfo->espICV[0];
+    opData.digestLen = pinfo->espICVLen[0];
+    opData.digest    = pinfo->espICV[1];
+    opData.digestLen = pinfo->espICVLen[1];
+
+    /* key */
+    opData.key       = (uint8_t *)key;
+    opData.keyLen    = 16;
+    /* Noce format, must be twelve octets */
+    opData.ivLen     = IV_MAX;
+    memcpy(opData.iv, salt, 4);
+    memcpy(opData.iv + 4, pinfo->espIV, pinfo->espIVLen);
+
+#ifdef OUT_OF_ORDER
+    kfifo_put(&out_of_order, skb->opaque);
+#endif
+    /* perform */
+    CY_SymPerformOp(IPSec_CallbackFn, skb->opaque, &opData, &bufList, &bufList);
+
     return;
 }
 
@@ -388,6 +441,8 @@ void IPSec_Decryption(intptr_t msg)
     MSG_DECMsgTypeDef *dec = (MSG_DECMsgTypeDef *)(msg + MSG_HEADER);
     NIC_RXDescTypeDef *desc = dec->desc;
 
+    memset(&ftable, 0, sizeof(frameTableTypeDef));
+
     ftable.direction    = INBOUND;
     ftable.nents        = dec->segs;
     ftable.containedLen = GET_FIELD(desc->desc6, 16, 0xffff);
@@ -403,7 +458,7 @@ void IPSec_Decryption(intptr_t msg)
     if ((!!ret))
         goto drop;
 
-#if 0
+#if 1
     /* Main Features */
     ESP_TRANSPORT(&ftable,
                   Find_RX_SA(ftable.frame[0].ip.dst,

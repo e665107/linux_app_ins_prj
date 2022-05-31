@@ -9,6 +9,7 @@
 uint32_t zerobuf[4] = {0, 0, 0, 0};
 
 uint32_t K[4] = {0xbbaa9988, 0xffeeddcc, 0x33221100, 0x77665544};
+uint32_t K_RXSA[4] = {0x04414ad6, 0xdbaf8788, 0x4ce111b1, 0x7d824c68};
 
 uint32_t IP[4] = {0x0a000002, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef};
 
@@ -76,8 +77,8 @@ struct SA_RX_TestCase {
         .saInd     = 0,
         .spi       = 0x00001000,
         .ip        = IP,
-        .key       = K,
-        .salt      = 0xffeeddcc,
+        .key       = K_RXSA,
+        .salt      = 0x3d93c6d0,
         .iptblInd  = 0,
     },
     {
@@ -135,7 +136,7 @@ struct DEC_TestCase {
     uint32_t saInd;
     uint32_t espLen;
 } DEC_TestCases[] = {
-#if 0
+#if 1
     {
         .type      = MSG_DEC,
         .plaintext = skbuf_rx,
@@ -155,7 +156,7 @@ struct DEC_TestCase {
         .espLen    = 18,
     },
 #endif
-#if 0
+#if 1
     {
         .type      = MSG_DEC,
         .plaintext = skbuf_rx,
@@ -179,7 +180,7 @@ struct DEC_TestCase {
         .espLen    = 18,
     },
 #endif
-#if 0
+#if 1
     {
         .type      = MSG_DEC,
         .plaintext = skbuf_rx,

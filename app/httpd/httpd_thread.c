@@ -6,13 +6,12 @@
 
 void *thread_0(void *arg)
 {
-
     printf("Thread0 is created\n");
 
     for(;;)
     {
             httpd_ins();
-            sleep(2);
+            /* sleep(2); */
             printf("Thread0 is running\n");
     }
 
@@ -46,13 +45,13 @@ int create_httpd_threads(void)
 
     int status;
 
-    printf("main thread ,ID is %d\n", pthread_self());
+    printf("main thread ,ID is %ld\n", pthread_self());
 
-    if (pthread_create(&th_id, NULL, (void *)thread, NULL) != 0)
-    {
-        printf("thread creation failed\n");
-        exit(EXIT_FAILURE);
-    }
+    /* if (pthread_create(&th_id, NULL, (void *)thread, NULL) != 0) */
+    /* { */
+    /*     printf("thread creation failed\n"); */
+    /*     exit(EXIT_FAILURE); */
+    /* } */
 
     if (pthread_create(&th_id0, NULL, (void *)thread_0, NULL) != 0)
     {

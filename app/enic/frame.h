@@ -54,9 +54,17 @@ typedef struct {
 } frameTypeDef;
 
 typedef struct {
+    uint32_t espPayload_Flag;
+    uint32_t espTrailer_Flag;
+    uint32_t espICV_Flag;
+    uint8_t espPayload_Start_seg ;
+    uint8_t espTrailer_Start_seg ;
+    uint8_t espICV_Start_seg ;
+} fieldlocationTypeDef;
+typedef struct {
+    fieldlocationTypeDef locationMark;
     unsigned int nents;         /* number of mapped entries */
     frameTypeDef frame[6];      /* the list */
 } frameTableTypeDef;
 
 #endif /* _FRAME_H */
-

@@ -610,8 +610,6 @@ static void Print_Frame_ESP(frameTableTypeDef *frameTable)
     break;
 #endif
 
-
-
     return;
 }
 
@@ -736,17 +734,44 @@ static void Dump_Frame(frameTableTypeDef *frameTable)
 {
     uint32_t i;
 
-    printf("  Frame total bytes: %u  \n", frameTable->containedLen);
+    printf("  Frame total bytes: %u  \n"
+           "  Frame total nents: %u  \n",
+           frameTable->containedLen, frameTable->nents);
 
     for (i = 0; i < frameTable->nents; ++i) {
-        printf("  Frame total bytes: %u  \n",
+        printf(
+               "  Eth  hdr:        0x%lx  \n"
+               "  Eth  hdrLen:     %u  \n"
+               "  Ip   hdr:        0x%lx  \n"
+               "  Ip   hdrLen:     %u  \n"
+               "  Esp  hdr:        0x%lx  \n"
+               "  Esp  hdrLen:     %u  \n"
+               "  Esp  iv:         0x%lx  \n"
+               "  Esp  ivLen:      %u  \n"
+               "  Esp  payload:    0x%lx  \n"
+               "  Esp  payloadLen: %u  \n"
+               "  Esp  trailer:    0x%lx  \n"
+               "  Esp  trailerLen: %u  \n"
+               "  Esp  icv:        0x%lx  \n"
+               "  Esp  icvLen:     %u  \n\n",
+               (intptr_t)frameTable->frame[i].eth.hdr,
+               frameTable->frame[i].eth.hdrLen,
+               (intptr_t)frameTable->frame[i].ip.hdr,
+               frameTable->frame[i].ip.hdrLen,
+               (intptr_t)frameTable->frame[i].esp.hdr,
+               frameTable->frame[i].esp.hdrLen,
+               (intptr_t)frameTable->frame[i].esp.iv,
+               frameTable->frame[i].esp.ivLen,
+               (intptr_t)frameTable->frame[i].esp.payload,
+               frameTable->frame[i].esp.payloadLen,
+               (intptr_t)frameTable->frame[i].esp.trailer,
+               frameTable->frame[i].esp.trailerLen,
+               (intptr_t)frameTable->frame[i].esp.icv,
+               frameTable->frame[i].esp.icvLen);
+        /* DUMPL("Esp payload", frameTable->frame[i].esp.payload,); */
+    };
 
 
-
-               frameTable->containedLen);
-
-
-    }
 
     return;
 }
@@ -813,12 +838,24 @@ redissect:
 
     case s_esp_payload:
         if (frame->dataLen < frame->reportedLen) {
+            if(!frameTable->locationMark.espPayload_Flag){
+                frameTable->locationMark.espPayload_Flag = 1;
+                frameTable->locationMark.espPayload_Start_seg = frameTable->nents - 1;
+            }
             frame->esp.payload    = frame->data;
             frame->esp.payloadLen = frame->dataLen;
             frame = SUBSET_REMAINING(frame->reportedLen - frame->dataLen);
             REDISSECT();
         } else {
             STRICT_CHECK(frame->dataLen < frame->reportedLen);
+            if(!frameTable->locationMark.espPayload_Flag){
+                frameTable->locationMark.espPayload_Flag = 1;
+                frameTable->locationMark.espPayload_Start_seg = frameTable->nents - 1;
+            }
+            if(!frameTable->locationMark.espPayload_end_Flag){
+                frameTable->locationMark.espPayload_end_Flag = 1;
+                frameTable->locationMark.espPayload_End_seg = frameTable->nents - 1;
+            }
             frame->esp.payload    = frame->data;
             frame->esp.payloadLen = frame->reportedLen;
             OFFSET(frame->esp.payloadLen);
@@ -829,12 +866,20 @@ redissect:
 
     case s_esp_trailer:
         if (frame->dataLen < frame->reportedLen) {
+            if(!frameTable->locationMark.espTrailer_Flag){
+                frameTable->locationMark.espTrailer_Flag = 1;
+                frameTable->locationMark.espTrailer_Start_seg = frameTable->nents - 1;
+            }
             frame->esp.trailer    = frame->data;
             frame->esp.trailerLen = frame->dataLen;
             frame = SUBSET_REMAINING(frame->reportedLen - frame->dataLen);
             REDISSECT();
         } else {
             STRICT_CHECK(frame->dataLen < frame->reportedLen);
+            if(!frameTable->locationMark.espTrailer_Flag){
+                frameTable->locationMark.espTrailer_Flag = 1;
+                frameTable->locationMark.espTrailer_Start_seg = frameTable->nents - 1;
+            }
             frame->esp.trailer    = frame->data;
             frame->esp.trailerLen = frame->reportedLen;
             OFFSET(frame->esp.trailerLen);
@@ -844,12 +889,20 @@ redissect:
 
     case s_esp_icv:
         if (frame->dataLen < frame->reportedLen) {
+            if(!frameTable->locationMark.espICV_Flag){
+                frameTable->locationMark.espICV_Flag = 1;
+                frameTable->locationMark.espICV_Start_seg = frameTable->nents - 1;
+            }
             frame->esp.icv    = frame->data;
             frame->esp.icvLen = frame->dataLen;
             frame = SUBSET_REMAINING(frame->reportedLen - frame->dataLen);
             REDISSECT();
         } else {
             STRICT_CHECK(frame->dataLen < frame->reportedLen);
+            if(!frameTable->locationMark.espICV_Flag){
+                frameTable->locationMark.espICV_Flag = 1;
+                frameTable->locationMark.espICV_Start_seg = frameTable->nents - 1;
+            }
             frame->esp.icv    = frame->data;
             frame->esp.icvLen = frame->reportedLen;
         }
@@ -859,5 +912,7 @@ redissect:
     }
 
     Print_Frame(frameTable);
+    Dump_Frame(frameTable);
+
     return SECERR_OK;
 }

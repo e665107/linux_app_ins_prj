@@ -526,7 +526,7 @@ void unimplemented(int client)
 int httpd_ins(void)
 {
     int server_sock = -1;
-    u_short port = 40000;
+    u_short port;
     int client_sock = -1;
     struct sockaddr_in client_name;
     int client_name_len = sizeof(client_name);
@@ -540,12 +540,14 @@ int httpd_ins(void)
                              (struct sockaddr *)&client_name,
                              &client_name_len);
 
+        printf("httpd accepted \n");
+
         if (client_sock == -1)
             error_die("accept");
 
-        /* accept_request(client_sock); */
-        if (pthread_create(&newthread, NULL, (void *)accept_request, (void *) &client_sock) != 0)
-            perror("pthread_create");
+        accept_request(client_sock);
+        /* if (pthread_create(&newthread, NULL, (void *)accept_request, (void *) &client_sock) != 0) */
+        /*     perror("pthread_create"); */
     }
 
     close(server_sock);

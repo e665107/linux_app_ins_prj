@@ -347,7 +347,7 @@ typedef struct {
 /* Scatter/Gather buffer list containing an array of flat buffers */
 typedef struct {
     uint32_t numBuffers;
-    FlatBufferTypedef buffers[1];
+    FlatBufferTypedef buffers[6];
     void *privateMetaData;
 } BufferListTypedef;
 #endif
